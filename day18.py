@@ -32,12 +32,6 @@ def Copy(z: Node) -> Node:
         p.l.p, p.r.p = p, p
         return p
 
-def ToListOrInt(y: Node):
-    if isinstance(y, Leaf):
-        return y.v
-    else:  # isinstance(y, Pair)
-        return [ToListOrInt(y.l), ToListOrInt(y.r)]
-
 def AddToFirst(z: Node, a: int) -> None:
     if isinstance(z, Leaf): z.v += a
     else: AddToFirst(z.l, a)
@@ -49,10 +43,6 @@ def AddToLast(z: Node, a: int) -> None:
 def TryExplode(z: Pair) -> bool:
     f = FindExplode(z, 4)
     if f is None: return False
-    if f.p is None:
-        print('this shouldnt happen')
-        print(ToListOrInt(f))
-        print(ToListOrInt(z))
     if f is f.p.l:
         f.p.l = Leaf(v=0, p=f.p)
         AddToFirst(f.p.r, f.r.v)
