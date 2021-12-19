@@ -2,6 +2,9 @@ import numpy as np
 from itertools import permutations
 from collections import deque
 
+# TODO: precompute the 24 x 29 rotated ys so that you don't need to do the
+# rotation inside match, which is called in a double loop.
+
 rot = []
 for x in [-1, 1]:
     for y in [-1, 1]:
@@ -41,7 +44,7 @@ print('this will take about 5-10 minutes')
 adj = [[None] * len(ys) for _ in ys]
 for i in range(len(ys)):
     for k in range(len(ys)):
-        print('double loop up to 28: ', i, k)
+        print('double loop up to 29: ', i, k)
         if i >= k: continue
         m = match(ys[i], ys[k])
         if m is None: continue
