@@ -18,11 +18,24 @@ def Bite(u, b):
     return out
 
 
-def Parse(s):
+def Constrain(r):
+    if r[0] > 50: return None
+    if r[1] < -50: return None
+    t = list(r)
+    if r[0] < -50: t[0] = -50
+    if r[1] > 50: t[1] = 50
+    return tuple(t)
+
+
+def Parse(s, constrain):
     state, xyz = s.strip().split()
     t = []
     for c in xyz.split(','):
-        t.append(tuple(map(int, c[2:].split('..'))))
+        r = tuple(map(int, c[2:].split('..')))
+        if constrain:
+            r = Constrain(r)
+            if r is None: return None
+        t.append(r)
     return state, tuple(t)
 
 
@@ -34,31 +47,24 @@ def Volume(g):
     return Length(x) * Length(y) * Length(z)
     
 
-def Solve(filename):
+def GetSteps(filename, constrain):
     with open(filename) as f:
-        steps = [Parse(ln) for ln in f]
+        steps = [Parse(ln, constrain) for ln in f]
+    return [s for s in steps if s is not None]
+
+
+def Solve(steps):
     state0, g0 = steps[0]
     assert state0 == 'on'
-    dis = set([g0])
+    dis = [g0]
     for i in range(1, len(steps)):
         state, g = steps[i]
-        print(f'solving step {i} of {len(steps)}; state = {state}, len(dis) = {len(dis)}')
+        dis = list(chain(*(Bite(d, g) for d in dis)))
         if state == 'on':
-            q = [g]
-            for d in dis:
-                q = list(chain(*(Bite(k, d) for k in q)))
-            dis.update(q)
-        else:  # s == 'off
-            rem = []
-            add = []
-            for d in dis:
-                b = Bite(d, g)
-                if b != [d]:
-                    rem.append(d)
-                    add.extend(b)
-            dis.difference_update(rem)
-            dis.update(add)
+            dis.append(g)
     return sum(Volume(d) for d in dis)
 
-print('this will take about 1 hour')
-print(Solve('d.txt'))
+f = 'd.txt'
+print('part 1 =', Solve(GetSteps(f, True)))
+print('solving for part 2; this will take about 20 seconds.')
+print('part 2 =', Solve(GetSteps(f, False)))
