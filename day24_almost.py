@@ -18,8 +18,7 @@ def Pretty(cond: tuple[int]):
 
 # invariant: when calling Rec with i, z contains the terms of polynomial in zi.
 def Rec(i, z: tuple[int], conds: tuple[tuple[int]]) -> None:
-    if i < 10: print(i, z, *map(Pretty, conds))
-    if i == 13:  # from invariant, we don't want to continue with z14, so done
+    if i == 14:  # recall zi is value of z BEFORE iteration i. Hence we want to complete iteration 13, so want z14, not z13!
         if not z and conds:  # found some conds that cause z = 0
             zero_conds.append(conds)
         return
@@ -83,12 +82,24 @@ def CheckCond(k: int, cond):
         if x != eq: return False
     return True
 
-'''
-k = 99999699999599
-assert len(k) == 14
+# interestingly there's only ONE set of conditions that gives z14 = 0
+assert len(zero_conds) == 1
+
+print('for part 1: These are the conditions for z = 0 at end:')
+for c in zero_conds[0]:
+    print(Pretty(c))
+k = 92915979999498
+kmin = 21611513911181
+print('should be pretty easy to determine the extremal input satisfying this.')
+print('if you want, can code up a topological sort, but can manually (ocularly?) in like 10 seconds.')
+print(f'Hint: largest = {k}, smallest = {kmin}')
+
+assert len(str(k)) == 14
+assert len(str(kmin)) == 14
 assert CheckCond(k, zero_conds[0])
-Test(k)   # FAILS!  242395
-'''
+assert CheckCond(kmin, zero_conds[0])
+assert Test(k) == 0
+assert Test(kmin) == 0
 
 '''
 Original attempt to do this problem by hand, which inspired the code above.
