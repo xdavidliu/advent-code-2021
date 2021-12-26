@@ -49,15 +49,16 @@ def Rec(i, z: tuple[int], conds: tuple[tuple[int]]) -> None:
                 Rec(i+1, z + (i,), conds + neq)  # (1, 0)
                 Rec(i+1, z, conds + eq)  # (1, 1)
 
-Rec(0, (), ())  # careful, may want 1, () instead. () means zero
+Rec(0, (), ())
 
 from operator import add, mul, floordiv, mod, eq
 
 def Digits(k: int): return [int(c) for c in f'{k:014d}']
 
 def Test(k: int):
-    assert isinstance(k, int) and 0 <= k < 10**14
+    assert isinstance(k, int)
     k = Digits(k)
+    assert 0 not in k  # from problem statement, digits cannot be 0
     var = dict(w=[0], x=[0], y=[0], z=[0])
     ops = dict(add=add, mul=mul, div=floordiv, eql=eq, mod=mod)
     i = 0
@@ -92,7 +93,18 @@ k = 92915979999498
 kmin = 21611513911181
 print('should be pretty easy to determine the extremal input satisfying this.')
 print('if you want, can code up a topological sort, but can manually (ocularly?) in like 10 seconds.')
-print(f'Hint: largest = {k}, smallest = {kmin}')
+print(f'for xdavidliu, largest = {k}, smallest = {kmin}')
+
+'''
+xdavidliu's output conditions:
+[k5 = k4 + 4]
+[k7 = k6 + 2]
+[k8 = k3 + 8]
+[k10 = k9 + 0]
+[k11 = k2 + -5]
+[k12 = k1 + 7]
+[k13 = k0 + -1]
+'''
 
 assert len(str(k)) == 14
 assert len(str(kmin)) == 14
