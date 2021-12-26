@@ -11,32 +11,43 @@ P = [int(a[6:]) for a in INS[15::18]]
 
 zero_conds = []
 
-# TODO: for some reason it never gets empty tuple at i = 13
-
 # invariant: when calling Rec with i, z contains the terms of polynomial in zi.
 def Rec(i, z: tuple[int], conds: tuple[tuple[int]]) -> None:
-    # if i < 8: print(i, z, conds)
     if i == 13:  # from invariant, we don't want to continue with z14, so done
-        if len(z) < 5: print(z)
         if not z and conds:  # found some conds that cause z = 0
             zero_conds.append(conds)
         return
-    s = 0 if not z else z[-1]
-    d = P[s] + H[i]
-    if abs(d) > 8:  # q = 0 guaranteed
-        if G[i] == 26:  # (26, 0)
-            Rec(i+1, z[:-1] + (i,), conds)
-        else:  # (1, 0)
-            Rec(i+1, z + (i,), conds)
-    else:  # q = 1 possible
-        eq = ((i, True, s, d),)
-        neq = ((i, False, s, d),)
-        if G[i] == 26:
-            Rec(i+1, z[:-1] + (i,), conds + neq)  # (26, 0)
-            Rec(i+1, z[:-1], conds + eq)  # (26, 1)   note NOT z[:-2]!!!
-        else:  # g[i] == 1
-            Rec(i+1, z + (i,), conds + neq)  # (1, 0)
-            Rec(i+1, z, conds + eq)  # (1, 1)
+    is26 = G[i] == 26
+    if not z:
+        if abs(H[i]) >= 10:  # q = 0 guaranteed
+            zz = z[:-1] + (i,) if is26 else z[:-1]   # (26,0) else (1,0)
+            Rec(i+1, zz, conds)
+        else:
+            eq = ((i, True, None, H[i]),)
+            neq = ((i, False, None, H[i]),)
+            if is26:
+                Rec(i+1, (i,), conds + neq)  # (26, 0)
+                Rec(i+1, (), conds + eq)  # (26, 1)
+            else:
+                Rec(i+1, (i,), conds + neq)  # (1, 0)
+                Rec(i+1, (), conds + eq)  # (1, 1)
+    else:  # z is non-empty
+        s = z[-1]
+        d = P[s] + H[i]
+        if abs(d) > 8:  # q = 0 guaranteed
+            if G[i] == 26:  # (26, 0)
+                Rec(i+1, z[:-1] + (i,), conds)
+            else:  # (1, 0)
+                Rec(i+1, z + (i,), conds)
+        else:  # q = 1 possible
+            eq = ((i, True, s, d),)
+            neq = ((i, False, s, d),)
+            if G[i] == 26:
+                Rec(i+1, z[:-1] + (i,), conds + neq)  # (26, 0)
+                Rec(i+1, z[:-1], conds + eq)  # (26, 1)   note NOT z[:-2]!!!
+            else:  # g[i] == 1
+                Rec(i+1, z + (i,), conds + neq)  # (1, 0)
+                Rec(i+1, z, conds + eq)  # (1, 1)
 
 Rec(0, (), ())  # careful, may want 1, () instead. () means zero
 
@@ -72,10 +83,10 @@ def CheckCond(k: int, cond):
     return True
 
 '''
-k0 = 99999998999499
-assert len(k0) == 14
-assert CheckCond(k0, zero_conds[0])
-assert 0 == Test(k0)   # FAILS!  6302215
+k = 99999699999599
+assert len(k) == 14
+assert CheckCond(k, zero_conds[0])
+Test(k)   # FAILS!  242395
 '''
 
 '''
