@@ -5,7 +5,7 @@ VALUE = [0] * 70  # ord('D') = 68
 for c, v in zip('ABCD', [1, 10, 100, 1000]):
     VALUE[ord(c)] = v
 
-PART = 2 # either 1 or 2
+PART = 1 # either 1 or 2
 # PROBLEM_P = b'BACDBCDA       '  # test in problem description
 PROBLEM_P = b'ADCABDCB       ' # xdavidliu actual input
 
@@ -128,17 +128,15 @@ def DropUntilStop(p: bytearray) -> int:
 
 def Dijkstra(p0: bytes) -> int:
     hp = [(0, p0)]
-    best = dict()
+    best = {p0: 0}
     DONE = bytes('A' * H + 'B' * H + 'C' * H + 'D' * H + ' ' * 7, 'utf')
+    high = 1
     while hp:
         cost, p = heapq.heappop(hp)
         # invariant: everything popped cannot be further DroppedUntilStop
         if p == DONE: return cost
-        b = best.get(p)
-        if b is not None:
-            assert cost >= b  # cannot be < b because it must've been previously popped
-            continue
-        best[p] = cost
+        if cost > best[p]: continue  # obsolete items
+        assert cost == best[p]
         for r in range(4):
             if IsPartial(p, r): continue
             ir = Top(p, r)
@@ -150,10 +148,9 @@ def Dijkstra(p0: bytes) -> int:
                 pa[ir], pa[ih] = pa[ih], pa[ir]
                 new_cost = cost + VALUE[c] * DIST[ir][ih] + DropUntilStop(pa)
                 pp = bytes(pa)
-                bb = best.get(pp)
-                if bb is not None:
-                    assert new_cost >= bb
-                else:
+                b = best.get(pp)
+                if b is None or b > new_cost:
+                    best[pp] = new_cost
                     heapq.heappush(hp, (new_cost, pp))
 
 # For debugging purposes; not actually needed
