@@ -11,27 +11,28 @@ P = [int(a[6:]) for a in INS[15::18]]
 
 zero_conds = []
 
+def Pretty(cond: tuple[int]):
+    i, eq, s, d = cond
+    eq = '=' if eq else '!='
+    return f'[k{i} {eq} k{s} + {d}]'
+
 # invariant: when calling Rec with i, z contains the terms of polynomial in zi.
 def Rec(i, z: tuple[int], conds: tuple[tuple[int]]) -> None:
+    if i < 10: print(i, z, *map(Pretty, conds))
     if i == 13:  # from invariant, we don't want to continue with z14, so done
         if not z and conds:  # found some conds that cause z = 0
             zero_conds.append(conds)
         return
-    is26 = G[i] == 26
-    if not z:
-        if abs(H[i]) >= 10:  # q = 0 guaranteed
-            zz = z[:-1] + (i,) if is26 else z[:-1]   # (26,0) else (1,0)
-            Rec(i+1, zz, conds)
+    if not z:  # doesn't matter if is26 because zi / gi = 0 either way
+        if not 1 <= H[i] <= 9:  # q = 0 guaranteed
+            Rec(i+1, (i,), conds)
         else:
             eq = ((i, True, None, H[i]),)
             neq = ((i, False, None, H[i]),)
-            if is26:
-                Rec(i+1, (i,), conds + neq)  # (26, 0)
-                Rec(i+1, (), conds + eq)  # (26, 1)
-            else:
-                Rec(i+1, (i,), conds + neq)  # (1, 0)
-                Rec(i+1, (), conds + eq)  # (1, 1)
+            Rec(i+1, (i,), conds + neq)
+            Rec(i+1, (), conds + eq)
     else:  # z is non-empty
+        is26 = G[i] == 26
         s = z[-1]
         d = P[s] + H[i]
         if abs(d) > 8:  # q = 0 guaranteed
