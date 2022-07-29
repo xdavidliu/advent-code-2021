@@ -17,7 +17,7 @@ public class Day04 {
                 byte[] msg = s.getBytes("UTF-8");
                 byte[] z = md.digest(msg);
                 boolean a = z[0] == 0, b = z[1] == 0;
-                // boolean c = (z[2] < 16 && z[2] >= 0);  // part 1
+                // boolean c = (0 == (0xF0 & z[2]));  // part 1
                 boolean c = z[2] == 0;  // part 2
                 if (a && b && c) {
                     System.out.println("found: " + i);
