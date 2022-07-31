@@ -45,14 +45,14 @@ public class Day12 {
         // Assumes txt.charAt(pos) == '{'.
         int[] tempScore = {0};
         boolean redSeen = false;
-        do {
+        while ('}' != txt.charAt(pos)) {
             ++pos;  // first iteration is { and rest is ,
             int j = 1 + consumeName(txt, pos);  // skip the :
             pos = consume(txt, j, tempScore);
             if (!includeRed && !redSeen) {
                 redSeen = '"' == txt.charAt(j) && "\"red\"".equals(txt.substring(j, pos));
             }
-        } while ('}' != txt.charAt(pos));
+        }
         if (includeRed || !redSeen) score[0] += tempScore[0];
         return 1 + pos;
     }
