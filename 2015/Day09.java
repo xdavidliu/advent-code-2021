@@ -6,6 +6,8 @@ import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+// requires Permute.java, from this 2015 folder.
+
 public class Day09 {
     static Integer[][] matrix(List<int[]> edges, int n) {
         // Integer (not int) so that default is null, not 0.
@@ -48,27 +50,6 @@ public class Day09 {
             }
             return matrix(edges, places.size());
     }
-    static void swap(int[] seq, int i, int k) {
-        int temp = seq[i];
-        seq[i] = seq[k];
-        seq[k] = temp;
-    }
-    static void reverseFrom(int[] seq, int i) {
-        for (int k = seq.length - 1; i < k; ++i, --k) {
-            swap(seq, i, k);
-        }
-    }
-    static boolean permute(int[] seq) {
-        // Assumes distinct elements.
-        int i = seq.length - 2;
-        while (i >=0 && seq[i] > seq[i+1]) --i;
-        if (i < 0) return false;
-        int k = seq.length - 1;
-        while (seq[i] > seq[k]) --k;
-        swap(seq, i, k);
-        reverseFrom(seq, i+1);
-        return true;
-    }
     static Integer score(int[] seq, Integer[][] mat) {
         Integer sum = 0;
         for (int i = 0; i < seq.length - 1; ++i) {
@@ -84,7 +65,7 @@ public class Day09 {
         int[] seq = new int[mat.length];
         for (int i = 0; i < seq.length; ++i) seq[i] = i;
         Integer low = score(seq, mat), high = low;
-        while (permute(seq)) {
+        while (Permute.permute(seq)) {
             Integer sc = score(seq, mat);
             if (sc == null) continue;
             if (low == null || sc < low) low = sc;
