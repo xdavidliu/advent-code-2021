@@ -10,15 +10,14 @@ import java.util.regex.Pattern;
 
 public class Day16 {
     public static void main(String[] args) {
-        fillTapeOutput();
         String path = "c:\\users\\xdavi\\documents\\temp\\input.txt";
         for (String ln : read(path)) {
             check(ln, 1);
             check(ln, 2);
         }
     }
-    static List<String> GREATER = List.of("cats", "trees");
-    static List<String> LESS = List.of("pomeranians", "goldfish");
+    static final List<String> GREATER = List.of("cats", "trees");
+    static final List<String> LESS = List.of("pomeranians", "goldfish");
     static void check(String ln, int part) {
         Matcher mat = pat.matcher(ln);
         if (!mat.matches()) return;
@@ -44,20 +43,7 @@ public class Day16 {
             return ls;
         } catch (IOException e) { return null; }
     }
-    static Map<String, Integer> tapeOutput;
-    static void fillTapeOutput() {
-        if (tapeOutput == null) {
-            tapeOutput = new TreeMap<>();
-            tapeOutput.put("children", 3);
-            tapeOutput.put("cats", 7);
-            tapeOutput.put("samoyeds", 2);
-            tapeOutput.put("pomeranians", 3);
-            tapeOutput.put("akitas", 0);
-            tapeOutput.put("vizslas", 0);
-            tapeOutput.put("goldfish", 5);
-            tapeOutput.put("trees", 3);
-            tapeOutput.put("cars", 2);
-            tapeOutput.put("perfumes", 1);
-        }
-    }
+    static Map<String, Integer> tapeOutput =
+      Map.of("children", 3, "cats", 7, "samoyeds", 2, "pomeranians", 3, "akitas", 0,
+             "vizslas", 0, "goldfish", 5, "trees", 3, "cars", 2, "perfumes", 1);
 }
