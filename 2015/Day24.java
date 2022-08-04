@@ -16,7 +16,6 @@ public class Day24 {
         List<List<Integer>> found = new ArrayList<>();
         Three three = new Three(xs);
         three.recurse(0, new ArrayList<>(), sum / 3, found);
-        System.out.println("found " + found.size());
         long best = Long.MAX_VALUE;
         for (List<Integer> f : found) {
             best = Math.min(best, Split.productList(f));
@@ -37,6 +36,7 @@ abstract class Split {
     int[] restSum;
     abstract boolean precondition(List<Integer> keep);
     abstract void add(List<Integer> keep, List<List<Integer>> found);
+    abstract boolean foundOne();
     Split(List<Integer> a) {
         arr = a;
         int n = arr.size();
@@ -88,6 +88,7 @@ class Three extends Split {
     Three(List<Integer> a) {
         super(a);
     }
+    @Override boolean foundOne() { return lowSize != -1; }
     @Override boolean precondition(List<Integer> keep) {
         return lowSize == -1 || keep.size() < lowSize;
         // assumes beginning of recurse always has target > 0
@@ -100,9 +101,9 @@ class Three extends Split {
         assert 0 == sum % 2; 
         // assume input sum divisible by 3, and initial target is a third, so remaining
         // diff must be even.
-        Two two = new Two(diff);        
+        Split two = new Two(diff);        
         two.recurse(0, Collections.emptyList(), sum / 2, null);
-        if (two.foundOne) {
+        if (two.foundOne()) {
             if (lowSize == -1) lowSize = keep.size();
             found.add(keep);
         }
@@ -115,14 +116,9 @@ class Three extends Split {
 }
 
 class Two extends Split {
-    boolean foundOne = false;
-    Two(List<Integer> a) {
-        super(a);
-    }
-    @Override boolean precondition(List<Integer> keep) {
-        return !foundOne;
-    }
-    @Override void add(List<Integer> keep, List<List<Integer>> found) {
-        foundOne = true;
-    }
+    boolean fOne = false;
+    Two(List<Integer> a) { super(a); }
+    @Override boolean foundOne() { return fOne; }
+    @Override boolean precondition(List<Integer> keep) { return !fOne; }
+    @Override void add(List<Integer> keep, List<List<Integer>> found) { fOne = true; }
 }
