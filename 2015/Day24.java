@@ -10,17 +10,28 @@ public class Day24 {
         String path = "c:\\users\\xdavi\\documents\\temp\\input.txt";
         List<Integer> xs = read(path);
         Collections.sort(xs, (a, b) -> Integer.compare(b, a));
-        int sum = 0;
-        for (int x : xs) sum += x;
-        assert 0 == sum % 3;
+        part1(xs);
+        part2(xs);
+    }
+    static void part1(List<Integer> xs) {
         List<List<Integer>> found = new ArrayList<>();
-        Three three = new Three(xs);
-        three.recurse(0, new ArrayList<>(), sum / 3, found);
+        Split three = new SpecialThree(xs);
+        three.recurse(0, new ArrayList<>(), Split.sumList(xs) / 3, found);
         long best = Long.MAX_VALUE;
         for (List<Integer> f : found) {
             best = Math.min(best, Split.productList(f));
         }
         System.out.println("part 1 = " + best);
+    }
+    static void part2(List<Integer> xs) {
+        List<List<Integer>> found = new ArrayList<>();
+        Split four = new SpecialFour(xs);
+        four.recurse(0, new ArrayList<>(), Split.sumList(xs) / 4, found);
+        long best = Long.MAX_VALUE;
+        for (List<Integer> f : found) {
+            best = Math.min(best, Split.productList(f));
+        }
+        System.out.println("part 2 = " + best);
     }
     static List<Integer> read(String path) {
         try (Scanner sc = new Scanner(new File(path))) {
@@ -83,28 +94,26 @@ abstract class Split {
     }
 }
 
-class Three extends Split {
+abstract class Special extends Split {
     int lowSize = -1;
-    Three(List<Integer> a) {
+    Special(List<Integer> a) {
         super(a);
     }
+    abstract Split smaller(List<Integer> diff);
+    abstract int getSmallerTarget(int sum);
     @Override boolean foundOne() { return lowSize != -1; }
     @Override boolean precondition(List<Integer> keep) {
-        return lowSize == -1 || keep.size() < lowSize;
+        return !foundOne() || keep.size() < lowSize;
         // assumes beginning of recurse always has target > 0
     }
     @Override void add(List<Integer> keep, List<List<Integer>> found) {
         if (lowSize > 0 && keep.size() > lowSize) return;
-        assert lowSize == -1 || keep.size() == lowSize;
         List<Integer> diff = setDifference(arr, keep);
         int sum = Split.sumList(diff);
-        assert 0 == sum % 2; 
-        // assume input sum divisible by 3, and initial target is a third, so remaining
-        // diff must be even.
-        Split two = new Two(diff);        
-        two.recurse(0, Collections.emptyList(), sum / 2, null);
-        if (two.foundOne()) {
-            if (lowSize == -1) lowSize = keep.size();
+        Split small = smaller(diff);        
+        small.recurse(0, Collections.emptyList(), getSmallerTarget(sum), null);
+        if (small.foundOne()) {
+            if (!foundOne()) lowSize = keep.size();
             found.add(keep);
         }
     }
@@ -113,6 +122,24 @@ class Three extends Split {
         diff.removeAll(small);
         return diff;
     }
+}
+
+class SpecialThree extends Special {
+    SpecialThree(List<Integer> a) { super(a); }
+    @Override Split smaller(List<Integer> diff) { return new Two(diff); }
+    @Override int getSmallerTarget(int sum) { return sum / 2; }
+}
+
+class SpecialFour extends Special {
+    SpecialFour(List<Integer> a) { super(a); }
+    @Override Split smaller(List<Integer> diff) { return new SimpleThree(diff); }
+    @Override int getSmallerTarget(int sum) { return sum / 3; }
+}
+
+class SimpleThree extends SpecialThree {
+    SimpleThree(List<Integer> a) { super(a); }
+    @Override boolean precondition(List<Integer> keep) { return !foundOne(); }
+    @Override void add(List<Integer> keep, List<List<Integer>> found) { lowSize = 1; }
 }
 
 class Two extends Split {
