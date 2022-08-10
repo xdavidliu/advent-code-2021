@@ -21,7 +21,7 @@ part2 ([ci,cv]:ps) qs
 part2 _ _ = error "part 2"
 
 main = do
-    putStrLn "part 1 (this will take about 45 seconds):"
+    putStrLn "part 1 (this will take about 45 seconds. Make sure to ghc instead of runghc):"
     putStrLn $ map head (take 8 found)
     putStrLn "part 2:"
     putStrLn $ part2 found []
