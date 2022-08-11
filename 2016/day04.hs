@@ -4,7 +4,6 @@ import Data.Char (ord, chr)
 import Control.Monad (forM_)
 import Data.Text (isInfixOf, pack)
 
-count :: (Foldable t, Num b, Eq a) => a -> t a -> b
 count c = foldl inc 0 where
     inc i x | c == x = i+1 | otherwise = i
 
