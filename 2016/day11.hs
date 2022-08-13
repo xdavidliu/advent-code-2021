@@ -7,7 +7,7 @@ main = do
   putStrLn "part 1 will take about 5 seconds"
   putStr "part 1 = "
   print $ solve inputOne
-  putStrLn "part 1 will take about 10 MINUTES!!!!!"
+  putStrLn "part 2 will take about 10 MINUTES!!!!!"
   putStr "part 2 = "
   print $ solve inputTwo
 
