@@ -16,14 +16,14 @@ main = do
     hClose han
 
 data Reg = A | B | C | D deriving (Show)
-data Ins = CpI Int Reg | CpR Reg Reg | Inc Reg | Dec Reg |
+data Ins = CpI Int Reg | CpR Reg Reg | Inc Int Reg |
            JnzI Int Int | JnzR Reg Int deriving (Show)
 
 parse :: String -> Ins
 parse ln = case head ws of
   "cpy" -> parseCpy $ tail ws
-  "inc" -> Inc reg
-  "dec" -> Dec reg
+  "inc" -> Inc 1 reg
+  "dec" -> Inc (-1) reg
   "jnz" -> parseJnz $ tail ws
   _ -> error "parse"
   where ws = words ln
@@ -80,8 +80,7 @@ performJump i k before rest regs
 
 performOne (CpI i r) regs = storeVal i r regs
 performOne (CpR t r) regs = storeVal (value t regs) r regs
-performOne (Inc r) regs = addVal 1 r regs
-performOne (Dec r) regs = addVal (-1) r regs
+performOne (Inc i r) regs = addVal i r regs
 performOne _ _ = error "performOne"
 
 storeVal i A (a,b,c,d) = (i,b,c,d)
