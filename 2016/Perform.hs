@@ -6,14 +6,12 @@ module Perform
   Val(A,B,C,D)
 ) where
 
--- TODO: handle invalid jumps by doing nothing
-
 -- for day 12 and day 23
 
 import Text.Read (readMaybe)
 import Data.List (splitAt)
 
-data Ins = Cpy Val Val | Inc Int Val | Jnz Val Val
+data Ins = Cpy Val Val | Inc Int Val | Jnz Val Val | Tgl Val
 data Val = A | B | C | D | Val Int
 
 parse :: String -> Ins
@@ -22,6 +20,7 @@ parse ln = case cmd of
   "inc" -> Inc 1 val1
   "dec" -> Inc (-1) val1
   "jnz" -> Jnz val1 val2
+  "tgl" -> Tgl val1
   _ -> undefined
   where (cmd:args) = words ln
         val1 = parseVal $ head args
@@ -51,18 +50,32 @@ perform :: [Ins] -> [Ins] -> Regs -> Regs
 perform _ [] regs = regs
 perform before rest@(Jnz v k : _) regs =
   performJump (value v regs) (value k regs) before rest regs
+perform before rest@(Tgl v : _) regs =
+  performToggle (value v regs) before rest regs
 perform before (ins : after) regs =
   perform (ins:before) after (performOne ins regs)
 
+performToggle k before rest regs
+  | k >= 0 = perform (head tRest : before) (tail tRest) regs
+  | otherwise = perform (head rest : tBefore) (tail rest) regs
+  where tRest = toggleK rest k
+        tBefore = toggleK before (abs k - 1)
+
+toggleK xs k
+  | k >= length xs = xs
+  | otherwise = bef ++ [toggle x] ++ aft
+  where (bef, x : aft) = splitAt k xs
+
 performJump i k before rest regs
-  | i == 0 = perform (ins:before) after regs
+  | i == 0 = noop
+  | k > length rest = noop
   | k > 0 = perform (reverse restK ++ before) restButK regs
+  | k < negate (length before) = noop
   | k < 0 = perform beforeButK (reverse beforeK ++ rest) regs
-  | otherwise = error "performJump"
-  where (restK, restButK) = splitAt (abs k) rest
+  | otherwise = undefined
+  where (restK, restButK) = splitAt k rest
         (beforeK, beforeButK) = splitAt (abs k) before
-        ins = head rest
-        after = tail rest
+        noop = perform (head rest : before) (tail rest) regs
 
 performOne (Cpy p q) regs = storeVal (value p regs) q regs
 performOne (Inc i q) regs = addVal i q regs
@@ -78,4 +91,10 @@ addVal i A (a,b,c,d) = (a+i,b,c,d)
 addVal i B (a,b,c,d) = (a,b+i,c,d)
 addVal i C (a,b,c,d) = (a,b,c+i,d)
 addVal i D (a,b,c,d) = (a,b,c,d+i)
-addVal i (Val x) rs = rs
+addVal _ (Val _) rs = rs
+
+toggle :: Ins -> Ins
+toggle (Inc i x) = Inc (negate i) x
+toggle (Tgl x) = Inc 1 x
+toggle (Jnz x y) = Cpy x y
+toggle (Cpy x y) = Jnz x y
