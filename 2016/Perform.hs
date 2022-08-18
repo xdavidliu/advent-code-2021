@@ -6,6 +6,8 @@ module Perform
   Val(A,B,C,D)
 ) where
 
+-- TODO: handle invalid jumps by doing nothing
+
 -- for day 12 and day 23
 
 import Text.Read (readMaybe)
