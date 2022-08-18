@@ -1,0 +1,90 @@
+  12 0 0 0        Note: can do part 1 using Perform.hs and similar to day12.hs
+cpy a b           however, part 2 times out, so I chose to analyze this
+                  manually, and was able to get a closed form sol for both parts
+dec b         2,4 -> b = a - 1
+  12 11 0 0    132 10 -16 0    
+cpy a d
+  
+cpy 0 a       6,8 -> d = a,  a = 0
+  0 11 0 12
+cpy b c
+  
+inc a        
+
+dec c        
+
+jnz c -2      10,12,14,16 -> a += b
+  
+dec d
+
+jnz d -5        10,12,14,16,18,20 -> a += d * b, d = 0
+  132 11 0 0    1320 10 -16 0     6,8,10,12,14,16,18,20 -> a *= b
+dec b  
+  
+cpy b c
+
+cpy c d
+
+dec d
+
+inc c         
+
+jnz d -2      22,24,26,28,30,32 = --b, c = 2 * b
+  132 10 22 0     1320 9 18 0
+tgl c         ?????
+
+cpy -16 c
+
+jnz 1 c       36,38 -> c = -16, go back to line 6, later cpy 1 c
+
+cpy 99 c
+
+jnz 77 d, actually cpy 77 d
+
+inc a
+
+inc d, actually dec d
+
+jnz d -2
+
+inc c, actually dec c
+
+jnz c -5
+
+at line 34, we have
+a = 12*11*10, b = 9, c = 18, 0
+a = 12*11*10*9, b = 8, c = 16, 0
+a = 12*11*10*9*8, b = 7, c = 14, 0
+a = 12*11 ... *5, b = 4, c = 8, 0
+  toggles line 50 from inc c to dec c
+a = 12*11 ... *4, b = 3, c = 6, 0
+  toggles line 46 from inc d to dec d
+a = 12*11 ... *3, b = 2, c = 4, 0
+  toggles line 42 from jnz 77 d to cpy 77 d
+a = 12*11 ... *2, b = 1, c = 2, 0
+  toggles line 38 from jnz 1 c to cpy 1 c
+
+tgl c effective for c = 0, 1, 2 ... 9
+
+so entering line 40, we have
+a = 12*11 ... *2, b = 1, c = 1, 0
+
+copied below, line 74 is line 40 above
+
+cpy 99 c
+  
+cpy 77 d
+  a = 12!, b = 1, c = 99, d = 77
+inc a
+
+dec d
+
+jnz d -2     76,78,80,82 -> a += 77, d = 0
+
+dec c
+
+jnz c -5     76,78,80,82,84,86 -> a += c * 77, c = 0, d = 0
+
+finally: a = 12! + 99 * 77 = 479009223
+
+similarly from part 1, it begins with 7 so it's 7! + 99 * 77 = 12663
