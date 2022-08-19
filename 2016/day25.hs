@@ -76,7 +76,7 @@ last bit is definitely 1 when a is 0
 16 has an jn c -5, but c = 0 after 54 (see above) so that gets skipped. Note we
 still have the same d = y, so this whole thing starts over!
 
-So basically we must have both x + 4 * 633 have bit pattern
+So basically we must have  x + 4 * 633 have bit pattern
 of the form 10101010.
 -}
 main = do
