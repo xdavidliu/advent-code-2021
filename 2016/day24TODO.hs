@@ -1,8 +1,7 @@
 import System.IO
     ( hClose, openFile, hGetContents, IOMode(ReadMode) )
-import Control.Monad (forM_)
-import Data.Array (listArray, assocs, (!))
-import Data.Char (isDigit)
+import Data.Array (listArray, assocs, array, (!))
+import Data.Char (isDigit, intToDigit)
 import Data.Sequence (Seq, viewl, (|>), ViewL(EmptyL, (:<)))
 import qualified Data.Sequence as Seq
 import Data.Set (Set)
@@ -13,17 +12,23 @@ main = do
     conts <- hGetContents han
     let gr = grid (lines conts)
         digs = [(i,e) | (i,e) <- assocs gr, isDigit e]
-    forM_ digs print
-    print $ bfTreeDigs '0' digs gr
+        tb = table digs gr
+    print tb
     hClose han
 
 grid lns = listArray ((0,0), (nr-1,nc-1)) $ concat lns
   where nr = length lns
         nc = length (head lns)
 
-bfTreeDigs e digs gr =
-    bfs gr (Seq.singleton (i,0)) (Set.singleton i) [(e,0)] (length digs)
-      where (i,_) = head [(i,c) | (i,c) <- digs, c == e]
+table digs gr = concat [els c (b i c) | (i,c) <- digs]
+  where iQu i = Seq.singleton (i,0)
+        iSeen i = Set.singleton i
+        nDig = length digs
+        b i c = bfs gr (iQu i) (iSeen i) [(c,0)] nDig
+        foo x (y, d) = ((x, y), d)
+        els c digSeen = map (foo c) digSeen
+        hi = intToDigit $ nDig - 1
+        bnds = (('0', '0'), (hi, hi))
 
 bfs gr qu seen digSeen nDig = case viewl qu of
     EmptyL -> undefined  -- let explore return
