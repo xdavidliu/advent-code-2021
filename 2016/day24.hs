@@ -2,25 +2,40 @@ import System.IO
     ( hClose, openFile, hGetContents, IOMode(ReadMode) )
 import Data.Array (listArray, assocs, array, (!))
 import Data.Char (isDigit, intToDigit)
+import Data.List (permutations)
 import Data.Sequence (Seq, viewl, (|>), ViewL(EmptyL, (:<)))
 import qualified Data.Sequence as Seq
 import Data.Set (Set)
 import qualified Data.Set as Set
+import Control.Monad (forM_)
 
 main = do
-    han <- openFile "test.txt" ReadMode
+    han <- openFile "input.txt" ReadMode
     conts <- hGetContents han
     let gr = grid (lines conts)
         digs = [(i,e) | (i,e) <- assocs gr, isDigit e]
+        nzDigs = [e | (_,e) <- digs, e /= '0']
         tb = table digs gr
-    print tb
+        perms = map ('0' :) $ permutations nzDigs
+        roundTrips = map (++ "0") perms
+        ans1 = minimum $ map (travel tb) perms
+        ans2 = minimum $ map (travel tb) roundTrips
+    putStr "part 1 = "
+    print ans1
+    putStr "part 2 = "
+    print ans2
     hClose han
+
+travel tb cs = rec cs 0
+    where rec [_] acc = acc
+          rec (x:y:cs) acc = rec (y:cs) (acc + tb ! (x,y))
+          rec _ _ = undefined
 
 grid lns = listArray ((0,0), (nr-1,nc-1)) $ concat lns
   where nr = length lns
         nc = length (head lns)
 
-table digs gr = concat [els c (b i c) | (i,c) <- digs]
+table digs gr = array bnds $ concat [els c (b i c) | (i,c) <- digs]
   where iQu i = Seq.singleton (i,0)
         iSeen i = Set.singleton i
         nDig = length digs
