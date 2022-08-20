@@ -1,27 +1,12 @@
-import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
-
 public class Day01 {
-    private static int solve(String input) {
-        int score = 0, pos = 0;
-        boolean part2 = true;
-        for (char c : input.toCharArray()) {
-            switch(c) {
-                case '(' -> ++score;
-                case ')' -> --score;
-            }
-            ++pos;
-            if (part2 && score == -1) {
-                part2 = false;
-                System.out.printf("part 2 = %d\n", pos);
-            }
+    public static void main(String[] args) throws java.io.IOException {
+        String input = java.nio.file.Files.readString(java.nio.file.Path.of(
+                "/Users/xdavidliu/Documents/temp/data01.txt"));
+        int score = 0, firstNeg = -1;
+        for (int i = 0; i < input.length(); ++i) {
+            switch(input.charAt(i)) { case '(' -> ++score; case ')' -> --score; }
+            if (firstNeg == -1 && score == -1) firstNeg = i + 1;
         }
-        return score;
-    }
-    public static void main(String[] args) throws IOException {
-        var ln = Files.readString(Path.of(
-                "/Users", "xdavidliu", "Documents", "temp", "data01.txt"));
-        System.out.printf("part 1 = %d\n", solve(ln));
+        System.out.format("part 1 = %d, part 2 = %d\n", score, firstNeg);
     }
 }
