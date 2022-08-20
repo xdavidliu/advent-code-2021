@@ -1,17 +1,21 @@
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.Arrays;
+import java.util.stream.IntStream;
 
 public class Day01 {
+    private static int value(int cp) {
+        return switch(cp) { case '(' -> 1; case ')' -> -1; default -> 0; };
+    }
     public static void main(String[] args) throws IOException {
-        String input = Files.readString(Path.of(
-                "/home/xdavidliu/Documents/temp/data01.txt"));
-        int score = 0;
-        Integer firstNeg = null;
-        for (int i = 0; i < input.length(); ++i) {
-            switch(input.charAt(i)) { case '(' -> ++score; case ')' -> --score; }
-            if (firstNeg == null && score == -1) firstNeg = i + 1;
-        }
-        System.out.format("part 1 = %d, part 2 = %d\n", score, firstNeg);
+        var sums = Files.readString(Path.of(
+                "/home/xdavidliu/Documents/temp/data01.txt"))
+                .codePoints().map(Day01::value).toArray();
+        Arrays.parallelPrefix(sums, Integer::sum);
+        System.out.format("part 1 = %d, part 2 = %d\n",
+                sums[sums.length - 1],
+                1 + IntStream.range(0, sums.length)
+                        .filter(i -> 0 > sums[i]).findFirst().orElse(-2));
     }
 }
