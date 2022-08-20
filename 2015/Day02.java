@@ -2,7 +2,7 @@ public class Day02 {
     private static int[] dimensions(String ln) {
         var mch = java.util.regex.Pattern.compile(
                 "(\\d+)x(\\d+)x(\\d+)").matcher(ln);
-        if (mch.matches() && mch.groupCount() == 3) {
+        if (mch.matches()) {
             return java.util.stream.Stream.of(1,2,3)
                     .map(i -> Integer.decode(mch.group(i))).mapToInt(i -> i).toArray();
         } else throw new RuntimeException("invalid data");
