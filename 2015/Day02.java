@@ -14,14 +14,17 @@ public class Day02 {
                 dims.stream().mapToInt(Day02::part1).sum(),
                 dims.stream().mapToInt(Day02::part2).sum());
     }
+    private static final Pattern PAT = Pattern.compile("(\\d+)x(\\d+)x(\\d+)");
     private static int[] dimensions(String ln) {
-        var mch = Pattern.compile("(\\d+)x(\\d+)x(\\d+)").matcher(ln);
+        var mch = PAT.matcher(ln);
         if (!mch.matches()) throw new RuntimeException("invalid data: " + ln);
         return Stream.of(1,2,3).mapToInt(i -> Integer.decode(mch.group(i))).toArray();
     }
     private static int part1(int[] dim) {
-        return Arrays.stream(dim).min().getAsInt() + 2 *
-                Stream.of(0,1,2).mapToInt(i -> dim[i] * dim[(i+1)%3]).sum();
+        var areas = Stream.of(0,1,2)
+                .mapToInt(i -> dim[i] * dim[(i+1)%3]).toArray();
+        return Arrays.stream(areas).min().getAsInt()
+                + 2 * Arrays.stream(areas).sum();
     }
     private static int part2(int[] dim) {
         int max = Arrays.stream(dim).max().getAsInt();
