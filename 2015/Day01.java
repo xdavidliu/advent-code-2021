@@ -6,7 +6,11 @@ import java.util.stream.IntStream;
 
 public class Day01 {
     private static int value(int cp) {
-        return switch(cp) { case '(' -> 1; case ')' -> -1; default -> 0; };
+        switch(cp) {
+            case '(': return 1;
+            case ')': return -1;
+            default: throw new RuntimeException("invalid char");
+        }
     }
     public static void main(String[] args) throws IOException {
         var sums = Files.readString(Path.of(
@@ -16,6 +20,6 @@ public class Day01 {
         System.out.format("part 1 = %d, part 2 = %d\n",
                 sums[sums.length - 1],
                 1 + IntStream.range(0, sums.length)
-                        .filter(i -> 0 > sums[i]).findFirst().orElse(-2));
+                        .filter(i -> 0 > sums[i]).findFirst().getAsInt());
     }
 }
