@@ -4,7 +4,7 @@
 #include <string_view>
 #include <cstddef>
 
-int solve(std::string_view s, const std::size_t d) {
+int solve(const std::string_view s, const std::size_t d) {
     int sum = 0;
     for (std::size_t i = 0; i < s.size(); ++i) {
         const auto a = s[i], b = s[(i+d)%s.size()];
