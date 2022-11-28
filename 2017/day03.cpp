@@ -44,63 +44,78 @@ int solve1(int input) {
 
 int solve2(int input) {
     std::vector<int> cur{1, 2, 4, 5, 10, 11, 23, 25};
-    int sz = 8;
-    std::vector<int> prev;
-    const int cap = input;  // heuristic
-    prev.resize(cap);
-    cur.resize(cap);
-    while (true) {
-        prev.swap(cur);
-        sz += 8;
-        // not expected to happen, but prevents out of bounds just in case
-        if (sz > input) return -1;
-        cur[0] = prev[0] + prev[sz - 8 - 1];
+    cur.resize(input);
+    std::vector<int> prev(input);
+    int prev_sz = 0;
+    while (cur[prev_sz + 8 - 1] <= input) {
+        cur.swap(prev);
+        prev_sz += 8;
+        cur[0] = prev[prev_sz-1] + prev[0];
         cur[1] = 2 * cur[0] + prev[1];
-
-        int i = 2;
-        int val;
-        for (; i + 2 < sz / 4; ++i) {
-            val = cur[i-1] + prev[i] + prev[i-1] + prev[i-2];
-            if (val > input) { return val; }
-            cur[i] = val;
+        const int cur_quarter = (8 + prev_sz) / 4;
+        int i;
+        for (i = 2; i < cur_quarter - 2; ++i) {
+            cur[i] = cur[i-1] + prev[i] + prev[i-1] + prev[i-2];
         }
-        // i = sz / 4 - 2
+        // i = cur_quarter - 2
         cur[i] = cur[i-1] + prev[i-1] + prev[i-2];
-        ++i;  // sz / 4 - 1
+        ++i;  // i = cur_quarter - 1, last in east segment
         cur[i] = cur[i-1] + prev[i-2];
-        ++i;  // sz / 4
+        ++i;  // i = cur_quarter, first elem in north segment
+        cur[i] = cur[i-1] + cur[i-2] + prev[i-2] + prev[i-3];
+        ++i;  // i = 1 + cur_quarter, second elem in north segment
+        for (; i < 2 * cur_quarter - 2; ++i) {
+            cur[i] = cur[i-1] + prev[i-2] + prev[i-3] + prev[i-4];
+        }
+        // i = 2 * cur_quarter - 2
+        cur[i] = cur[i-1] + prev[i-3] + prev[i-4];
+        ++i;  // i = 2 * cur_quarter - 1
+        cur[i] = cur[i-1] + prev[i-4];
 
-        for(; i + 2 < sz / 2; ++i) {
+        ++i;  // i = 2 * cur_quarter, first elem in west segment
+        cur[i] = cur[i-1] + cur[i-2] + prev[i-4] + prev[i-5];
+        ++i;  // i = 2 * cur_quarter + 1
+        for (; i < 3 * cur_quarter - 2; ++i) {
+            cur[i] = cur[i-1] + prev[i-4] + prev[i-5] + prev[i-6];
+        }
+        // i = 3 * cur_quarter - 2
+        cur[i] = cur[i-1] + prev[i-5] + prev[i-6];
+        ++i;  // i = 3 * cur_quarter - 1
+        cur[i] = cur[i-1] + prev[i-6];
+        ++i;  // i = 3 * cur_quarter
+        cur[i] = cur[i-1] + cur[i-2] + prev[i-6] + prev[i-7];
 
+        ++i;  // i = 3 * cur_quarter + 1
+        for (; i < 4 * cur_quarter - 2; ++i) {
+            cur[i] = cur[i-1] + prev[i-6] + prev[i-7] + prev[i-8];
+        }
+        // i = 4 * cur_quarter - 2
+        cur[i] = cur[i-1] + prev[i-7] + prev[i-8] + cur[0];
+        ++i;  // i = 4 * cur_quarter - 1
+        cur[i] = cur[i-1] + prev[i-8] + cur[0];
+    }
+    /*
+    for (int i = 0; i < prev_sz + 8; ++i) {
+        std::cout << cur[i] << ' ';
+    }
+    std::cout << '\n';
+    */
+    for (int i = 0; i < prev_sz + 8; ++i) {
+        if (cur[i] > input) {
+            return cur[i];
         }
     }
-
-
-
+    return -1;  // error
 }
 
 int main(void) {
-    std::cout << "part 1 = " << solve1(277678) << '\n';
+    int input = 277678;
+    std::cout << "part 1 = " << solve1(input) << '\n';
+    std::cout << "part 2 = " << solve2(input) << '\n';
 }
 
 /*
- * part 2 notes
- *
- * layer 1 is 1
- * layer 2 is 8
- * layer 3 is 16
- * ...
- * layer 4 is 24
- *
- * hmm, maybe just use a 2-d grid and compute manually, since sums are gonna
- * blow up pretty quick
- *
- * allocate 1, put 1 as value
- * allocate 8, treat as four "spirals" of 2 each.
- */
-
-/*
-nov 18, 2022
+ * nov 18, 2022
 
 https://adventofcode.com/2017/day/3#part2
 
@@ -206,4 +221,4 @@ c21 = p13 + p14 + p15 + c20
 
 c22 = p14 + p15 + c0 + c21
 c23 = p15 + c0 + c22
-*/
+ */
