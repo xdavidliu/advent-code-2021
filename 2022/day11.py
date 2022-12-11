@@ -1,8 +1,5 @@
 import queue
 
-# assumes all the _test_val are primes
-# not sure why this works, but it's something to do with
-# chinese remainder theorem
 prime_prod = 1
 
 class Monkey:
@@ -68,9 +65,11 @@ with open('data.txt', 'r') as file:
     for i in range(20):
         for m in monkeys1:
             m.work(monkeys1)
-    best_two = sorted([m._count for m in monkeys1], reverse=True)[:2]
     print(prod_best_two(monkeys1))
     # part 2
+    # assumes all the _test_val are primes
+    # not sure why this works, but it's something to do with
+    # chinese remainder theorem
     for m in monkeys2:
         prime_prod *= m._test_val
     for i in range(10000):
