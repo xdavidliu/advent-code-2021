@@ -1,4 +1,7 @@
 import queue
+# TODO: replace this with collections.deque since you don't need threading stuff
+# and queue.Queue.get blocks. I tried using queue.Queue on day12 and it hanged on
+# the second BFS
 
 prime_prod = 1
 
