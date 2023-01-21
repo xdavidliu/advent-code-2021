@@ -1,6 +1,7 @@
 import re
 import math
-from collections import deque
+from collections import deque, defaultdict
+from itertools import combinations
 
 pat = re.compile(r'Valve (\w+) has flow rate=(\d+); tunnels? leads? to valves? ([ \w,]+)\n')
 
@@ -55,22 +56,45 @@ for valve in nonzero_valves + ['AA']:
     others.sort(key = lambda nb: distances[(valve, nb)])
     nonzero_adjacent[valve] = others
 
-param = 5  # play around with this to tradeoff running time with score
+param = 5  # play around with this to trade off running time with score
 best = -math.inf
+record = defaultdict(list)
 
 def recurse(valve, seen, score, time_left):
     global best
     others = nonzero_adjacent[valve]
+    if score > 0:
+        record[seen[0]].append((score, seen))
+    best = max(best, score)
     for other in others[:param]:
+        if other in seen:
+            continue
         dist = distances[(valve, other)]
-        if dist + 1 >= time_left:
-            best = max(best, score)
-            return
-        if other not in seen:
+        if dist + 1 < time_left:
             new_time_left = time_left - dist - 1
             new_score = score + new_time_left * rate_of[other]
-            recurse(other, seen + [valve], new_score, new_time_left)   
+            recurse(other, seen + (other,), new_score, new_time_left)   
 
-
-recurse('AA', [], 0, 30)
+recurse('AA', (), 0, 30)
 print(f'part 1 = {best}')
+
+param = 5
+# don't need to reset best
+record = defaultdict(list)
+other_best = -math.inf
+
+recurse('AA', (), 0, 26)
+
+for tups in record.values():
+    # score is first element, reverse so high scores first
+    tups.sort(reverse=True)
+
+for r1, r2 in combinations(record.values(), 2):
+    for score1, seen1 in r1:
+        for score2, seen2 in r2:
+            if score1 + score2 <= other_best:
+                break  # because sorted, so next score2 is only worse
+            if not any(x in seen2 for x in seen1):
+                other_best = score1 + score2
+
+print(f'part 2 = {other_best}')
