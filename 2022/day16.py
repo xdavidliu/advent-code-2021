@@ -78,17 +78,14 @@ def recurse(valve, seen, score, time_left):
 recurse('AA', (), 0, 30)
 print(f'part 1 = {best}')
 
-param = 5
-# don't need to reset best
 record = defaultdict(list)
-other_best = -math.inf
-
 recurse('AA', (), 0, 26)
 
 for tups in record.values():
     # score is first element, reverse so high scores first
     tups.sort(reverse=True)
 
+other_best = -math.inf
 for r1, r2 in combinations(record.values(), 2):
     for score1, seen1 in r1:
         for score2, seen2 in r2:
@@ -96,5 +93,6 @@ for r1, r2 in combinations(record.values(), 2):
                 break  # because sorted, so next score2 is only worse
             if not any(x in seen2 for x in seen1):
                 other_best = score1 + score2
+                break
 
 print(f'part 2 = {other_best}')
