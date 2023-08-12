@@ -14,22 +14,9 @@ func main() {
 	defer fi.Close()
 	sc := bufio.NewScanner(bufio.NewReader(fi))
 	// sc.Split(bufio.ScanLines)  // already the default
-	inss := make([]instruction, 0, 1000) // capacity comes from # lines in data.txt
 	for sc.Scan() {
 		// works fine if final line is empty
-		ins := parse(sc.Text())
-		regVals[ins.reg] = 0
-		inss = append(inss, ins)
-	}
-	largestAtAnyTime := math.MinInt
-	for _, ins := range inss {
-		if testCondition(ins) {
-			next := regVals[ins.reg] + ins.val
-			regVals[ins.reg] = next
-			if next > largestAtAnyTime {
-				largestAtAnyTime = next
-			}
-		}
+		perform(sc.Text())
 	}
 	largestFinal := math.MinInt
 	for _, v := range regVals {
@@ -41,74 +28,44 @@ func main() {
 	fmt.Println("part 2 =", largestAtAnyTime)
 }
 
-var regVals = map[register]int{}
-
-func testCondition(ins instruction) bool {
-	regVal := regVals[ins.condReg]
-	condVal := ins.condVal
-	switch ins.cmp {
-	case lessThan:
+func testCondition(cmp string, regVal int, condVal int) bool {
+	switch cmp {
+	case "<":
 		return regVal < condVal
-	case lessThanOrEqual:
+	case "<=":
 		return regVal <= condVal
-	case equal:
+	case "==":
 		return regVal == condVal
-	case greaterThanOrEqual:
+	case ">=":
 		return regVal >= condVal
-	case greatThan:
+	case ">":
 		return regVal > condVal
-	case notEqual:
+	case "!=":
 		return regVal != condVal
 	default:
-		// recall that there are no enums in golang, so instruction
-		// is a type alias, NOT an enum; hence no such thing as
-		// "cover all the cases", thus this default is required.
 		panic(nil)
 	}
 }
 
-type register string
+var regVals = map[string]int{}
 
-type instruction struct {
-	reg     register
-	val     int
-	condReg register
-	cmp     compare
-	condVal int
-}
+var largestAtAnyTime = math.MinInt
 
-type compare int
-
-const (
-	lessThan compare = iota
-	lessThanOrEqual
-	equal
-	greaterThanOrEqual
-	greatThan
-	notEqual
-)
-
-var atocmp = map[string]compare{
-	"<":  lessThan,
-	"<=": lessThanOrEqual,
-	"==": equal,
-	">=": greaterThanOrEqual,
-	">":  greatThan,
-	"!=": notEqual,
-}
-
-func parse(s string) instruction {
+func perform(s string) {
 	words := strings.Split(s, " ")
 	val, _ := strconv.Atoi(words[2])
 	if words[1] == "dec" {
 		val *= -1
 	}
 	condVal, _ := strconv.Atoi(words[6])
-	return instruction{
-		reg:     register(words[0]),
-		val:     val,
-		condReg: register(words[4]), // 3 is "if"
-		cmp:     atocmp[words[5]],
-		condVal: condVal,
+	condRegVal := regVals[words[4]] // 0 if not there is correct
+	cmp := words[5]
+	if testCondition(cmp, condRegVal, condVal) {
+		reg := words[0]
+		next := regVals[reg] + val
+		regVals[reg] = next
+		if next > largestAtAnyTime {
+			largestAtAnyTime = next
+		}
 	}
 }
