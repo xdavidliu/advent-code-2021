@@ -20,11 +20,9 @@ var rocks = [...]rock{
 	{{0, 0}, {0, 1}, {1, 0}, {1, 1}},         // square
 }
 
-var rockIdx = 0
-
 func nextRock() rock {
-	i := rockIdx
-	rockIdx = (i + 1) % len(rocks)
+	i := theState.rockIdx
+	theState.rockIdx = (i + 1) % len(rocks)
 	return rocks[i]
 }
 
@@ -71,15 +69,25 @@ func inputString(fileName string) string {
 	return line
 }
 
-func solve(fileName string, maxStopCount int) {
+type state struct {
+	rockIdx int
+	dirIdx  int
+}
+
+var theState = state{0, 0}
+
+func solve(fileName string, maxStopCount int) (states []state, highs []int) {
+	states = make([]state, 0, maxStopCount)
+	highs = make([]int, 0, maxStopCount)
 	line := inputString(fileName)
 	stopCount := 0
-	dirIdx := 0 // direction index
 	// at beginning, lowest empty "cell" has y = 0, so
 	// the ground can be thought of as a bunch of blocks
 	// with y = -1.
 	highest := -1
 	for stopCount < maxStopCount {
+		states = append(states, theState)
+		highs = append(highs, highest)
 		r := nextRock()
 		// "left edge is two units away from the left wall and its bottom edge is
 		// three units above the highest"
@@ -89,8 +97,8 @@ func solve(fileName string, maxStopCount int) {
 		off := point{2, highest + 1 + 3}
 		// prevHighest := highest
 		for {
-			i := dirIdx
-			dirIdx = (i + 1) % len(line)
+			i := theState.dirIdx
+			theState.dirIdx = (i + 1) % len(line)
 			switch line[i] {
 			case '<':
 				if leftFree(r, off) {
@@ -121,10 +129,61 @@ func solve(fileName string, maxStopCount int) {
 			}
 		} // for {
 	} // for stopCount < maxStopCount {
+	return
+}
+
+func detectPossibleCycle(states []state) {
+	inds := make(map[state][]int)
+	for i, s := range states {
+		inds[s] = append(inds[s], i)
+	}
+	for _, v := range inds {
+		for l := 0; l+1 < len(v); l++ {
+			// part after && says the second half can't go off edge
+			for r := l + 1; r < len(v) && 2*v[r]-v[l] <= len(states); r++ {
+				match := true
+				for m := 1; v[l]+m < v[r]; m++ {
+					if states[v[l]+m] != states[v[r]+m] {
+						match = false
+						break
+					}
+				}
+				if match {
+					fmt.Println("found match", v[l], v[r], v[r]-v[l])
+					return
+				}
+			}
+		}
+	}
+}
+
+func blah() {
+	directory := "/home/xdavidliu/Documents/jetbrains-projects/goland/hello"
+	fileName := directory + "/data.txt"
+	states, highs := solve(fileName, 10022)
+	detectPossibleCycle(states) // found match 849 2594 1745
+	// if I increase maxStopCount higher than 10k, I get matches with v[r]-v[l] =
+	// double that, so that's just four cycles instead of two. Hence, from above
+	// we know that state at 849 and 2594 are beginnings of first and second cycles delta :
+	i, j := 849, 2594
+	// j - i = 1745
+	fmt.Println(highs[i])                // 1339
+	fmt.Println(highs[j] - highs[i])     // 2778
+	fmt.Println(highs[j+j-i] - highs[j]) // 2778
+	// hence starting from i = 849, right before rock i falls (where first one is
+	// rock 0), for every 1745 rocks that fall (including rock i), the height
+	// increases by 2778 (starting from 1339 at i = 849)
+	// hence, after 10^12 rocks have fallen, we are "right before rock 10^12", hence
+	// hence (10^12 - 849) / 1745 = 573065902 rem 161
+	// hence height at 10^12 is 1339 + 573065902 * 2778 + diff
+	// where diff is h[849 + 161] - h[849]
+	fmt.Println(highs[849+161] - highs[849]) // 256
+	// hence answer for part 2 is that + 1 = 1591977077352
+	
+	// todo: can actually do all the manual calculations above completely
+	// programmatically
 }
 
 func main() {
-	directory := "/home/xdavidliu/Documents/jetbrains-projects/goland/hello"
-	fileName := directory + "/data.txt"
-	solve(fileName, 2022)
+	blah()
 }
