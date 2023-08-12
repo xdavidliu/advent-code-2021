@@ -132,7 +132,7 @@ func solve(fileName string, maxStopCount int) (states []state, highs []int) {
 	return
 }
 
-func detectPossibleCycle(states []state) {
+func firstPossibleCycle(states []state) (int, int) {
 	inds := make(map[state][]int)
 	for i, s := range states {
 		inds[s] = append(inds[s], i)
@@ -149,41 +149,40 @@ func detectPossibleCycle(states []state) {
 					}
 				}
 				if match {
-					fmt.Println("found match", v[l], v[r], v[r]-v[l])
-					return
+					// first match is also leftmost, and probably smallest
+					return v[l], v[r]
 				}
 			}
 		}
 	}
-}
-
-func blah() {
-	directory := "/home/xdavidliu/Documents/jetbrains-projects/goland/hello"
-	fileName := directory + "/data.txt"
-	states, highs := solve(fileName, 10022)
-	detectPossibleCycle(states) // found match 849 2594 1745
-	// if I increase maxStopCount higher than 10k, I get matches with v[r]-v[l] =
-	// double that, so that's just four cycles instead of two. Hence, from above
-	// we know that state at 849 and 2594 are beginnings of first and second cycles delta :
-	i, j := 849, 2594
-	// j - i = 1745
-	fmt.Println(highs[i])                // 1339
-	fmt.Println(highs[j] - highs[i])     // 2778
-	fmt.Println(highs[j+j-i] - highs[j]) // 2778
-	// hence starting from i = 849, right before rock i falls (where first one is
-	// rock 0), for every 1745 rocks that fall (including rock i), the height
-	// increases by 2778 (starting from 1339 at i = 849)
-	// hence, after 10^12 rocks have fallen, we are "right before rock 10^12", hence
-	// hence (10^12 - 849) / 1745 = 573065902 rem 161
-	// hence height at 10^12 is 1339 + 573065902 * 2778 + diff
-	// where diff is h[849 + 161] - h[849]
-	fmt.Println(highs[849+161] - highs[849]) // 256
-	// hence answer for part 2 is that + 1 = 1591977077352
-	
-	// todo: can actually do all the manual calculations above completely
-	// programmatically
+	panic(nil)
 }
 
 func main() {
-	blah()
+	directory := "/home/xdavidliu/Documents/jetbrains-projects/goland/hello"
+	fileName := directory + "/data.txt"
+	states, highs := solve(fileName, 10022)
+	i, j := firstPossibleCycle(states) // found match 849 2594
+	// if I increase maxStopCount higher than 10k, I get matches with v[r]-v[l] =
+	// double that, so that's just four cycles instead of two. Hence, from above
+	// we know that state at 849 and 2594 are beginnings of first and second cycles delta :
+	// j - i = 1745
+	const tenTo12 = 1000000000000
+	quot := (tenTo12 - i) / (j - i)
+	rem := (tenTo12 - i) % (j - i)
+	diff := highs[i+rem] - highs[i]
+	heightAtTenTo12 := highs[i] + quot*(highs[j]-highs[i]) + diff
+	fmt.Println("part 2 =", heightAtTenTo12+1)
+	//fmt.Println(highs[i])                // 1339
+	//fmt.Println(highs[j] - highs[i])     // 2778
+	//fmt.Println(highs[j+j-i] - highs[j]) // 2778
+	// hence starting from i = 849, right before rock i falls (where first one is
+	// rock 0), for every 1745 rocks that fall (including rock i), the height
+	// increases by 2778 (starting from 1339 at i = 849)
+	// hence, after 10^12 rocks have fallen, we are "right before rock 10^12"
+	// hence (10^12 - 849) / 1745 = 573065902 rem 161
+	// hence height at 10^12 is 1339 + 573065902 * 2778 + diff
+	// where diff is h[849 + 161] - h[849]
+	// fmt.Println(highs[849+161] - highs[849]) // 256
+	// hence answer for part 2 is that + 1 = 1591977077352
 }
