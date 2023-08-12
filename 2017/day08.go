@@ -97,13 +97,6 @@ var atocmp = map[string]compare{
 	"!=": notEqual,
 }
 
-// ugly but necessary to avoid "val: val" below
-// https://stackoverflow.com/a/69189022/2990344
-func atoi(s string) int {
-	val, _ := strconv.Atoi(s)
-	return val
-}
-
 func parse(s string) instruction {
 	words := strings.Split(s, " ")
 	val, _ := strconv.Atoi(words[2])
