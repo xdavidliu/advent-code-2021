@@ -10,13 +10,6 @@ import (
 
 func main() {
 	solve()
-	//
-	// after this, put all the triplets from csvToInts into
-	// a map, then iterate through the keys of the map and
-	// for all 6 faces see if the other cube is in the map.
-	// count all those and divide by 2 cuz u double counted, then
-	// take len(map) * 6 which is total
-	// # faces, subtract count shared from above
 }
 
 func csvToVec(line string) vec {
