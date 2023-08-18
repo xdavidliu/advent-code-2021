@@ -135,6 +135,7 @@ func solve(b blueprint, end byte) int {
 			s.ore = highCostOre
 		}
 		// not sure why this does not work
+		// todo, move to queue remove part
 		//if s.ore+(end-2-s.t)*(s.oreRob-highCostOre) >= highCostOre {
 		//	s.oreRob = 0
 		//	s.ore = (end - 1 - s.t) * highCostOre
