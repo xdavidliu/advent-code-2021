@@ -103,7 +103,6 @@ func part2(blues [3]blueprint) int {
 
 func part1(blues []blueprint) int {
 	ch := make(chan int)
-	results := make([]int, len(blues))
 	routine := func(i int) {
 		r := solve(blues[i], byte(24))
 		ch <- (i + 1) * r
@@ -111,12 +110,10 @@ func part1(blues []blueprint) int {
 	for i := range blues {
 		go routine(i)
 	}
-	for i := range results {
-		results[i] = <-ch
-	}
 	total := 0
-	for _, v := range results {
-		total += v
+	for _ = range blues {
+		r := <-ch
+		total += r
 	}
 	return total
 }
