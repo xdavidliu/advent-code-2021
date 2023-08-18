@@ -231,5 +231,7 @@ func solve(b blueprint, end byte) int {
 		}
 	}
 	fmt.Println(len(seen)) // measure size of BFS
+	// with all the above optimizations, each of the three in part 2 have like
+	// 500k BFS size. Without the optimizations, each was like 8 million.
 	return int(best)
 }
