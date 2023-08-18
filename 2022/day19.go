@@ -7,6 +7,12 @@ import (
 	"strconv"
 	"strings"
 )
+// ideas for improvement:
+// set values of ore, oreRobot, clay, etc to zero if they become meaningless. That
+// way explorers fewer nodes
+// exploit values of the costs to go further beyond end-4 and end-6. If it is impossible
+// to afford any more robots of a certain kind, just set as many things to zero as
+// you possibly can
 
 type blueprint struct {
 	oreCost, clayCost,
