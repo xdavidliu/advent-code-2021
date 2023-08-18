@@ -80,9 +80,17 @@ func main() {
 }
 
 func part2(blues [3]blueprint) int {
-	prod := 1
+	ch := make(chan int)
+	routine := func(b blueprint) {
+		ch <- solve(b, byte(32))
+	}
 	for _, b := range blues {
-		prod *= solve(b, 32)
+		go routine(b)
+	}
+	prod := 1
+	for i := 0; i < 3; i++ {
+		x := <-ch
+		prod *= x
 	}
 	return prod
 }
@@ -124,20 +132,49 @@ func solve(b blueprint, end byte) int {
 	seen[start] = true
 	s, ok := q.remove()
 	var best byte
+	highCostOre := max([]byte{b.oreCost, b.clayCost, b.obsidianCostOre, b.obsidianCostOre})
+	dedup := func(s *state) {
+		if s.oreRob == highCostOre && s.ore > highCostOre {
+			s.ore = highCostOre
+		}
+		// not sure why this does not work
+		//else if s.ore+(end-2-s.t)*(s.oreRob-highCostOre) >= highCostOre {
+		//	// okay this one is slightly wrong because it doesn't account for
+		//	// boundary effects, like off by one, like I have enough OVERALL
+		//	// but not enough just now
+		//	s.ore = highCostOre
+		//	s.oreRob = highCostOre
+		//}
+		// neat trick from https://youtu.be/yT3yHDp6hss
+	}
 	possiblyAdd := func(t state) {
+		dedup(&t) // optional but makes it faster
 		if !seen[t] {
 			q.add(t)
 			seen[t] = true
 		}
 	}
-	highCostOre := max([]byte{b.oreCost, b.clayCost, b.obsidianCostOre, b.obsidianCostOre})
 	for ; ok; s, ok = q.remove() {
-		if s.t == end {
-			if s.geode > best {
-				best = s.geode
+		if s.t == end-3 {
+			// huge optimization!
+			score := s.geode + 3*s.geodeRob
+			// can I afford a geode robot right now?
+			if s.ore >= b.geodeCostOre && s.obsidian >= b.geodeCostObsidian {
+				score += 2
+				if s.ore+s.oreRob >= 2*b.geodeCostOre && s.obsidian+s.obsidianRob >= 2*b.geodeCostObsidian {
+					// can afford another one at end-2
+					score++
+				}
+			} else if s.ore+s.oreRob >= b.geodeCostOre && s.obsidian+s.obsidianRob >= b.geodeCostObsidian {
+				// cannot afford at end-3 but can afford at end-2
+				score++ // geode robot only ready at end-1
+			}
+			if score > best {
+				best = score
 			}
 			continue
 		}
+		// at end-4 it's still meaningful to make obsidian robots and ore robots
 		if s.obsidian >= b.geodeCostObsidian && s.ore >= b.geodeCostOre {
 			t := s
 			t.obsidian -= b.geodeCostObsidian
@@ -147,6 +184,9 @@ func solve(b blueprint, end byte) int {
 			possiblyAdd(t)
 			continue // technically hack but should be obvious
 		}
+		t := s // for the case of not buying any robots
+		t.collect()
+		possiblyAdd(t)
 		if s.clay >= b.obsidianCostClay && s.ore >= b.obsidianCostOre && s.obsidianRob < b.geodeCostObsidian {
 			t := s
 			t.clay -= b.obsidianCostClay
@@ -155,7 +195,10 @@ func solve(b blueprint, end byte) int {
 			t.obsidianRob++
 			possiblyAdd(t)
 		}
-		if s.ore >= b.clayCost && s.clayRob < b.obsidianCostClay {
+		// end-6 is last time it's meaningful to make a clay robot, because then you
+		// get the clay robot at end-5, get 1 clay, get the obsidian robot at end-3,
+		// get one obsidian at end-2, then make a geode robot then.
+		if s.t <= end-6 && s.ore >= b.clayCost && s.clayRob < b.obsidianCostClay {
 			t := s
 			t.ore -= b.clayCost
 			t.collect()
@@ -169,9 +212,6 @@ func solve(b blueprint, end byte) int {
 			t.oreRob++
 			possiblyAdd(t)
 		}
-		t := s // for the case of not buying any robots
-		t.collect()
-		possiblyAdd(t)
 	}
 	return int(best)
 }
