@@ -7,12 +7,6 @@ import (
 	"strconv"
 	"strings"
 )
-// ideas for improvement:
-// set values of ore, oreRobot, clay, etc to zero if they become meaningless. That
-// way explorers fewer nodes
-// exploit values of the costs to go further beyond end-4 and end-6. If it is impossible
-// to afford any more robots of a certain kind, just set as many things to zero as
-// you possibly can
 
 type blueprint struct {
 	oreCost, clayCost,
@@ -141,20 +135,31 @@ func solve(b blueprint, end byte) int {
 			s.ore = highCostOre
 		}
 		// not sure why this does not work
-		//else if s.ore+(end-2-s.t)*(s.oreRob-highCostOre) >= highCostOre {
-		//	// okay this one is slightly wrong because it doesn't account for
-		//	// boundary effects, like off by one, like I have enough OVERALL
-		//	// but not enough just now
-		//	s.ore = highCostOre
-		//	s.oreRob = highCostOre
+		//if s.ore+(end-2-s.t)*(s.oreRob-highCostOre) >= highCostOre {
+		//	s.oreRob = 0
+		//	s.ore = (end - 1 - s.t) * highCostOre
 		//}
-		// neat trick from https://youtu.be/yT3yHDp6hss
+		if s.t == end-4 {
+			s.clayRob = 0 // end-5 to end-4 is last meaningful clay collection
+			if s.clay >= b.obsidianCostClay {
+				s.clay = b.obsidianCostClay // end-4 is last time making an obsidian
+				// robot can potentially make a difference
+			} else {
+				s.clay = 0
+			}
+		} else if s.t == end-3 {
+			s.clay = 0 // won't make any more obsidian robots so clay useless
+		}
 	}
 	possiblyAdd := func(t state) {
 		dedup(&t) // optional but makes it faster
-		if !seen[t] {
+		tzero := t
+		tzero.t = 0
+		// hack: because time is monotonically increasing in the BFS, previously
+		// seen states regardless of time are strictly better
+		if !seen[tzero] {
 			q.add(t)
-			seen[t] = true
+			seen[tzero] = true
 		}
 	}
 	for ; ok; s, ok = q.remove() {
@@ -216,5 +221,6 @@ func solve(b blueprint, end byte) int {
 			possiblyAdd(t)
 		}
 	}
+	fmt.Println(len(seen)) // measure size of BFS
 	return int(best)
 }
