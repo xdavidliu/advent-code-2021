@@ -3,6 +3,7 @@ package main
 import (
 	"bufio"
 	"fmt"
+	"math"
 	"os"
 	"strconv"
 	"strings"
@@ -121,6 +122,8 @@ func max(bs []byte) (m byte) {
 	return
 }
 
+const enough = math.MaxUint8
+
 func solve(b blueprint, end byte) int {
 	seen := make(map[state]bool)
 	var q queue
@@ -134,12 +137,11 @@ func solve(b blueprint, end byte) int {
 		if s.oreRob == highCostOre && s.ore > highCostOre {
 			s.ore = highCostOre
 		}
-		// not sure why this does not work
-		// todo, move to queue remove part
-		//if s.ore+(end-2-s.t)*(s.oreRob-highCostOre) >= highCostOre {
-		//	s.oreRob = 0
-		//	s.ore = (end - 1 - s.t) * highCostOre
-		//}
+		// careful here; byte is uint8 so negative numbers don't exist
+		if int(s.ore)-int(end-2-s.t)*int(highCostOre-s.oreRob) >= int(highCostOre) {
+			s.oreRob = 0
+			s.ore = enough
+		}
 		if s.t == end-4 {
 			s.clayRob = 0 // end-5 to end-4 is last meaningful clay collection
 			if s.clay >= b.obsidianCostClay {
@@ -187,7 +189,9 @@ func solve(b blueprint, end byte) int {
 		if s.obsidian >= b.geodeCostObsidian && s.ore >= b.geodeCostOre {
 			t := s
 			t.obsidian -= b.geodeCostObsidian
-			t.ore -= b.geodeCostOre
+			if t.ore != math.MaxUint8 {
+				t.ore -= b.geodeCostOre
+			}
 			t.collect() // must do BEFORE incrementing robots
 			t.geodeRob++
 			possiblyAdd(t)
@@ -199,7 +203,9 @@ func solve(b blueprint, end byte) int {
 		if s.clay >= b.obsidianCostClay && s.ore >= b.obsidianCostOre && s.obsidianRob < b.geodeCostObsidian {
 			t := s
 			t.clay -= b.obsidianCostClay
-			t.ore -= b.obsidianCostOre
+			if t.ore != enough {
+				t.ore -= b.obsidianCostOre
+			}
 			t.collect()
 			t.obsidianRob++
 			possiblyAdd(t)
@@ -209,12 +215,14 @@ func solve(b blueprint, end byte) int {
 		// get one obsidian at end-2, then make a geode robot then.
 		if s.t <= end-6 && s.ore >= b.clayCost && s.clayRob < b.obsidianCostClay {
 			t := s
-			t.ore -= b.clayCost
+			if t.ore != enough {
+				t.ore -= b.clayCost
+			}
 			t.collect()
 			t.clayRob++
 			possiblyAdd(t)
 		}
-		if s.ore >= b.oreCost && s.oreRob < highCostOre {
+		if t.ore != enough && s.ore >= b.oreCost && s.oreRob < highCostOre {
 			t := s
 			t.ore -= b.oreCost
 			t.collect()
