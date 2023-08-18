@@ -1,115 +1,126 @@
 package main
 
-import (
-	"bufio"
-	"fmt"
-	"math/rand"
-	"os"
-	"strconv"
-	"strings"
-)
+import "fmt"
 
-func solveOnce(costs robotCosts) int {
-	var ore, clay, obsidian, geode int
-	var oreRobot, clayRobot, obsidianRobot, geodeRobot int
-	oreRobot = 1
-	for t := 0; t < 24; t++ {
-		var deltaOreRobot, deltaClayRobot, deltaObsidianRobot, deltaGeodeRobot int
-		if ore >= costs.geodeRobotOre && obsidian >= costs.geodeRobotObsidian {
-			ore -= costs.geodeRobotOre
-			obsidian -= costs.geodeRobotObsidian
-			deltaGeodeRobot = 1
-		} else if ore >= costs.obsidianRobotOre && clay >= costs.obsidianRobotClay && rand.Float64() < 1.8/float64(1+obsidianRobot) {
-			ore -= costs.obsidianRobotOre
-			clay -= costs.obsidianRobotClay
-			deltaObsidianRobot = 1
-		} else if ore >= costs.clayRobotOre && rand.Float64() < 0.9/float64(1+clayRobot) {
-			ore -= costs.clayRobotOre
-			deltaClayRobot = 1
-		} else if ore >= costs.oreRobotOre && oreRobot < 4 && rand.Float64() < 0.5/float64(1+oreRobot) {
-			ore -= costs.oreRobotOre
-			deltaOreRobot = 1
-		}
-		ore += oreRobot
-		clay += clayRobot
-		obsidian += obsidianRobot
-		geode += geodeRobot
-		//
-		oreRobot += deltaOreRobot
-		clayRobot += deltaClayRobot
-		obsidianRobot += deltaObsidianRobot
-		geodeRobot += deltaGeodeRobot
-	}
-	return geode
+type blueprint struct {
+	id, oreCost, clayCost,
+	obsidianCostOre, obsidianCostClay,
+	geodeCostOre, geodeCostObsidian byte
 }
 
-type robotCosts struct {
-	oreRobotOre, clayRobotOre, obsidianRobotOre, obsidianRobotClay, geodeRobotOre, geodeRobotObsidian int
+type state struct {
+	t, ore, clay, obsidian, geode,
+	oreRob, clayRob, obsidianRob, geodeRob byte
+}
+
+func (s *state) collect() {
+	s.ore += s.oreRob
+	s.clay += s.clayRob
+	s.obsidian += s.obsidianRob
+	s.geode += s.geodeRob
+	s.t++
+}
+
+type queue struct {
+	data  []state
+	front int
+}
+
+func (q *queue) add(s state) {
+	q.data = append(q.data, s)
+}
+
+func (q *queue) remove() (s state, ok bool) {
+	if q.front >= len(q.data) {
+		ok = false
+		return
+	}
+	s = q.data[q.front]
+	q.front++
+	if 2*q.front >= len(q.data) {
+		count := len(q.data) - q.front
+		for i := 0; i < count; i++ {
+			q.data[i] = q.data[i+q.front]
+		}
+		q.data = q.data[:count]
+		q.front = 0
+	}
+	ok = true
+	return
 }
 
 func main() {
-	dir := "/home/xdavidliu/Documents/jetbrains-projects/goland/hello"
-	fin, _ := os.Open(dir + "/example.txt")
-	defer fin.Close()
-	sc := bufio.NewScanner(bufio.NewReader(fin))
-
-	quality := 0
-	for sc.Scan() {
-		words := strings.Split(sc.Text(), " ")
-		indices := []int{6, 12, 18, 21, 27, 30}
-		c := make([]int, len(indices))
-		for i, v := range indices {
-			c[i], _ = strconv.Atoi(words[v])
-		}
-		costs := robotCosts{
-			c[0], c[1], c[2], c[3], c[4], c[5],
-		}
-		best := 0
-		for i := 0; i < 10000000; i++ {
-			s := solveOnce(costs)
-			if s > best {
-				best = s
-			}
-		}
-		secondWord := words[1]
-		id, _ := strconv.Atoi(secondWord[:len(secondWord)-1])
-		quality += best * id
-		fmt.Println(id, best)
-	}
-	fmt.Println("part 1 =", quality)
-	// part 1 = 1603 too low
+	foo()
 }
 
-/*
-1 2
-2 3
-3 5
-4 7
-5 0
-6 0
-7 2
-8 9
-9 0
-10 3
-11 3
-12 3
-13 2
-14 6
-15 3    <- 2 on another one; got 1588
-16 0
-17 0
-18 14
-19 0
-20 1
-21 0
-22 13
-23 0
-24 0
-25 12
-26 0
-27 1
-28 0
-29 3
-30 8
-part 1 = 1603
-*/
+func foo() {
+	blue := blueprint{
+		id: 1, oreCost: 4, clayCost: 2,
+		obsidianCostOre: 3, obsidianCostClay: 14,
+		geodeCostOre: 2, geodeCostObsidian: 7,
+	}
+	fmt.Println(solve(blue))
+}
+
+const end = 24 // should be 24
+
+func solve(b blueprint) (best byte) {
+	seen := make(map[state]bool)
+	var q queue
+	start := state{oreRob: 1}
+	q.add(start)
+	seen[start] = true
+	s, ok := q.remove()
+	best = 0
+	possiblyAdd := func(t state) {
+		if !seen[t] {
+			q.add(t)
+			seen[t] = true
+		}
+	}
+	for ; ok; s, ok = q.remove() {
+		if s.t == end {
+			if s.geode > best {
+				best = s.geode
+			}
+			continue
+		}
+		if s.obsidian >= b.geodeCostObsidian && s.ore >= b.geodeCostOre {
+			t := s
+			t.obsidian -= b.geodeCostObsidian
+			t.ore -= b.geodeCostOre
+			t.collect()
+			t.geodeRob++
+			possiblyAdd(t)
+		}
+		if s.clay >= b.obsidianCostClay && s.ore >= b.obsidianCostOre {
+			t := s
+			t.clay -= b.obsidianCostClay
+			t.ore -= b.obsidianCostOre
+			t.collect()
+			t.obsidianRob++
+			possiblyAdd(t)
+		}
+		if s.ore >= b.clayCost {
+			t := s
+			t.ore -= b.clayCost
+			t.collect()
+			t.clayRob++
+			possiblyAdd(t)
+		}
+		if s.ore >= b.oreCost && s.ore < 4 {
+			t := s
+			t.ore -= b.oreCost
+			t.collect()
+			t.oreRob++
+			possiblyAdd(t)
+		}
+		t := s // also don't buy any robots
+		t.collect()
+		possiblyAdd(t)
+	}
+	return
+}
+
+// Blueprint 1: Each ore robot costs 4 ore. Each clay robot costs 2 ore.
+// Each obsidian robot costs 3 ore and 14 clay. Each geode robot costs 2 ore and 7 obsidian.
