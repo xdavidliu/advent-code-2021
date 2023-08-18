@@ -56,10 +56,6 @@ func (q *queue) remove() (s state, ok bool) {
 }
 
 func main() {
-	foo()
-}
-
-func foo() {
 	dir := "/usr/local/google/home/xdavidliu/Desktop"
 	fin, _ := os.Open(dir + "/data.txt")
 	defer fin.Close()
@@ -78,10 +74,28 @@ func foo() {
 		}
 		blues = append(blues, b)
 	}
+	//fmt.Println("part 1 =", parallelSolve(blues, 24)) // 1613
+	// oh wait, gotta multiply the geode not quality
+	end := byte(32)
+	prod := 1
+	for i := 0; i < 3; i++ {
+		ch := make(chan int)
+		var result int
+		id := i + 1
+		go solve(id, blues[i], end, ch)
+		result = <-ch
+		prod *= result / id
+	}
+	// todo: this is absolute sphagetti code; was trying to un-parallelize
+	// and strip off id part. Definitely could make this cleaner
+	fmt.Println("part 2 =", prod) // 46816
+}
+
+func parallelSolve(blues []blueprint, end byte) int {
 	ch := make(chan int)
 	results := make([]int, len(blues))
 	for i, b := range blues {
-		go solve(i+1, b, ch)
+		go solve(i+1, b, end, ch)
 	}
 	for i := range results {
 		results[i] = <-ch
@@ -90,10 +104,8 @@ func foo() {
 	for _, v := range results {
 		total += v
 	}
-	fmt.Println("part 1 =", total)  // 1613
+	return total
 }
-
-const end = 24 // should be 24
 
 func max(bs []byte) (m byte) {
 	for _, b := range bs {
@@ -104,7 +116,7 @@ func max(bs []byte) (m byte) {
 	return
 }
 
-func solve(id int, b blueprint, c chan int) {
+func solve(id int, b blueprint, end byte, c chan int) {
 	seen := make(map[state]bool)
 	var q queue
 	start := state{oreRob: 1}
@@ -133,8 +145,9 @@ func solve(id int, b blueprint, c chan int) {
 			t.collect()
 			t.geodeRob++
 			possiblyAdd(t)
+			continue // technically hack but should be obvious
 		}
-		if s.clay >= b.obsidianCostClay && s.ore >= b.obsidianCostOre {
+		if s.clay >= b.obsidianCostClay && s.ore >= b.obsidianCostOre && s.obsidianRob < b.geodeCostObsidian {
 			t := s
 			t.clay -= b.obsidianCostClay
 			t.ore -= b.obsidianCostOre
@@ -142,7 +155,7 @@ func solve(id int, b blueprint, c chan int) {
 			t.obsidianRob++
 			possiblyAdd(t)
 		}
-		if s.ore >= b.clayCost {
+		if s.ore >= b.clayCost && s.clayRob < b.obsidianCostClay {
 			t := s
 			t.ore -= b.clayCost
 			t.collect()
@@ -162,3 +175,10 @@ func solve(id int, b blueprint, c chan int) {
 	}
 	c <- id * int(best)
 }
+
+// todo: prune based on "giving up" if no chance of getting better than best
+// use simple expression
+// wait but best is at end. You want to truncate in the middle.
+// want top value of geodeRobot. Wait but don't want to prematurely give up
+// when 0 vs 1. Okay top value of geode. Give up if more than like 5 below,
+// use arbitrary param.
