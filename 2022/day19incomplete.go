@@ -1,9 +1,15 @@
 package main
 
-import "fmt"
+import (
+	"bufio"
+	"fmt"
+	"os"
+	"strconv"
+	"strings"
+)
 
 type blueprint struct {
-	id, oreCost, clayCost,
+	oreCost, clayCost,
 	obsidianCostOre, obsidianCostClay,
 	geodeCostOre, geodeCostObsidian byte
 }
@@ -54,30 +60,65 @@ func main() {
 }
 
 func foo() {
-	blue := blueprint{
-		id: 1, oreCost: 4, clayCost: 2,
-		obsidianCostOre: 3, obsidianCostClay: 14,
-		geodeCostOre: 2, geodeCostObsidian: 7,
+	dir := "/usr/local/google/home/xdavidliu/Desktop"
+	fin, _ := os.Open(dir + "/data.txt")
+	defer fin.Close()
+	sc := bufio.NewScanner(bufio.NewReader(fin))
+	var blues []blueprint
+	for sc.Scan() {
+		words := strings.Split(sc.Text(), " ")
+		convWord := func(i int) byte {
+			c, _ := strconv.Atoi(words[i])
+			return byte(c)
+		}
+		b := blueprint{
+			oreCost: convWord(6), clayCost: convWord(12),
+			obsidianCostOre: convWord(18), obsidianCostClay: convWord(21),
+			geodeCostOre: convWord(27), geodeCostObsidian: convWord(30),
+		}
+		blues = append(blues, b)
 	}
-	fmt.Println(solve(blue))
+	ch := make(chan int)
+	results := make([]int, len(blues))
+	for i, b := range blues {
+		go solve(i+1, b, ch)
+	}
+	for i := range results {
+		results[i] = <-ch
+	}
+	total := 0
+	for _, v := range results {
+		total += v
+	}
+	fmt.Println("part 1 =", total)  // 1613
 }
 
 const end = 24 // should be 24
 
-func solve(b blueprint) (best byte) {
+func max(bs []byte) (m byte) {
+	for _, b := range bs {
+		if b > m {
+			m = b
+		}
+	}
+	return
+}
+
+func solve(id int, b blueprint, c chan int) {
 	seen := make(map[state]bool)
 	var q queue
 	start := state{oreRob: 1}
 	q.add(start)
 	seen[start] = true
 	s, ok := q.remove()
-	best = 0
+	var best byte
 	possiblyAdd := func(t state) {
 		if !seen[t] {
 			q.add(t)
 			seen[t] = true
 		}
 	}
+	highCostOre := max([]byte{b.oreCost, b.clayCost, b.obsidianCostOre, b.obsidianCostOre})
 	for ; ok; s, ok = q.remove() {
 		if s.t == end {
 			if s.geode > best {
@@ -108,7 +149,7 @@ func solve(b blueprint) (best byte) {
 			t.clayRob++
 			possiblyAdd(t)
 		}
-		if s.ore >= b.oreCost && s.ore < 4 {
+		if s.ore >= b.oreCost && s.oreRob < highCostOre {
 			t := s
 			t.ore -= b.oreCost
 			t.collect()
@@ -119,8 +160,5 @@ func solve(b blueprint) (best byte) {
 		t.collect()
 		possiblyAdd(t)
 	}
-	return
+	c <- id * int(best)
 }
-
-// Blueprint 1: Each ore robot costs 4 ore. Each clay robot costs 2 ore.
-// Each obsidian robot costs 3 ore and 14 clay. Each geode robot costs 2 ore and 7 obsidian.
