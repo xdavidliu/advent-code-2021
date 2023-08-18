@@ -74,28 +74,28 @@ func main() {
 		}
 		blues = append(blues, b)
 	}
-	//fmt.Println("part 1 =", parallelSolve(blues, 24)) // 1613
-	// oh wait, gotta multiply the geode not quality
-	end := byte(32)
-	prod := 1
-	for i := 0; i < 3; i++ {
-		ch := make(chan int)
-		var result int
-		id := i + 1
-		go solve(id, blues[i], end, ch)
-		result = <-ch
-		prod *= result / id
-	}
-	// todo: this is absolute sphagetti code; was trying to un-parallelize
-	// and strip off id part. Definitely could make this cleaner
-	fmt.Println("part 2 =", prod) // 46816
+	fmt.Println("part 1 =", part1(blues)) // 1613
+	firstThree := [...]blueprint{blues[0], blues[1], blues[2]}
+	fmt.Println("part 2 =", part2(firstThree)) // 46816
 }
 
-func parallelSolve(blues []blueprint, end byte) int {
+func part2(blues [3]blueprint) int {
+	prod := 1
+	for _, b := range blues {
+		prod *= solve(b, 32)
+	}
+	return prod
+}
+
+func part1(blues []blueprint) int {
 	ch := make(chan int)
 	results := make([]int, len(blues))
-	for i, b := range blues {
-		go solve(i+1, b, end, ch)
+	routine := func(i int) {
+		r := solve(blues[i], byte(24))
+		ch <- (i + 1) * r
+	}
+	for i := range blues {
+		go routine(i)
 	}
 	for i := range results {
 		results[i] = <-ch
@@ -116,7 +116,7 @@ func max(bs []byte) (m byte) {
 	return
 }
 
-func solve(id int, b blueprint, end byte, c chan int) {
+func solve(b blueprint, end byte) int {
 	seen := make(map[state]bool)
 	var q queue
 	start := state{oreRob: 1}
@@ -142,7 +142,7 @@ func solve(id int, b blueprint, end byte, c chan int) {
 			t := s
 			t.obsidian -= b.geodeCostObsidian
 			t.ore -= b.geodeCostOre
-			t.collect()
+			t.collect() // must do BEFORE incrementing robots
 			t.geodeRob++
 			possiblyAdd(t)
 			continue // technically hack but should be obvious
@@ -169,16 +169,9 @@ func solve(id int, b blueprint, end byte, c chan int) {
 			t.oreRob++
 			possiblyAdd(t)
 		}
-		t := s // also don't buy any robots
+		t := s // for the case of not buying any robots
 		t.collect()
 		possiblyAdd(t)
 	}
-	c <- id * int(best)
+	return int(best)
 }
-
-// todo: prune based on "giving up" if no chance of getting better than best
-// use simple expression
-// wait but best is at end. You want to truncate in the middle.
-// want top value of geodeRobot. Wait but don't want to prematurely give up
-// when 0 vs 1. Okay top value of geode. Give up if more than like 5 below,
-// use arbitrary param.
