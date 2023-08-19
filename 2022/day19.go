@@ -7,6 +7,7 @@ import (
 	"os"
 	"strconv"
 	"strings"
+	"time"
 )
 
 type blueprint struct {
@@ -57,8 +58,8 @@ func (q *queue) remove() (s state, ok bool) {
 }
 
 func main() {
-	dir := "/usr/local/google/home/xdavidliu/Desktop"
-	fin, _ := os.Open(dir + "/data.txt")
+	dir := "/home/xdavidliu/Desktop"
+	fin, _ := os.Open(dir + "/data-2022-day-19.txt")
 	defer fin.Close()
 	sc := bufio.NewScanner(bufio.NewReader(fin))
 	var blues []blueprint
@@ -75,9 +76,13 @@ func main() {
 		}
 		blues = append(blues, b)
 	}
+	t0 := time.Now()
 	fmt.Println("part 1 =", part1(blues)) // 1613
+	t1 := time.Now()
+	fmt.Println("part 1 took", time.Since(t0))
 	firstThree := [...]blueprint{blues[0], blues[1], blues[2]}
 	fmt.Println("part 2 =", part2(firstThree)) // 46816
+	fmt.Println("part 2 took", time.Since(t1))
 }
 
 func part2(blues [3]blueprint) int {
