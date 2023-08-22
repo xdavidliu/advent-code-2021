@@ -15,22 +15,6 @@ type row struct {
 	right string
 }
 
-func valOrDefault(key string, vals map[string]int) string {
-	val, ok := vals[key]
-	if ok {
-		return strconv.Itoa(val)
-	} else {
-		return key
-	}
-}
-
-func (r row) show(vals map[string]int) string {
-	return fmt.Sprintf(
-		"%v = %v %v %v\n",
-		valOrDefault(r.left, vals), valOrDefault(r.mid, vals),
-		string([]byte{r.op}), valOrDefault(r.right, vals))
-}
-
 func assert(b bool) {
 	if !b {
 		panic(nil)
@@ -125,7 +109,7 @@ func part1(rows []row, vals map[string]int) {
 func part2(rows []row, vals map[string]int, root row) {
 	valRootMid, okRootMid := vals[root.mid]
 	valRootRight, okRootRight := vals[root.right]
-	for !(okRootRight && okRootMid) {
+	for !(okRootRight || okRootMid) {
 		rows = solveAndReduce(rows, vals)
 		valRootMid, okRootMid = vals[root.mid]
 		valRootRight, okRootRight = vals[root.right]
@@ -138,18 +122,8 @@ func part2(rows []row, vals map[string]int, root row) {
 		assert(okRootMid)
 		vals[root.right] = valRootMid
 	}
-	fmt.Println("initially", len(rows))
 	for !okHumn {
-		before := len(rows)
 		rows = solveAndReduce(rows, vals)
-		if before == len(rows) {
-			for _, r := range rows {
-				fmt.Println(r.show(vals))
-			}
-			fmt.Println(before)
-			// fmt.Println(vals)
-			return
-		}
 		valHumn, okHumn = vals["humn"]
 	}
 	fmt.Println("part 2 =", valHumn)
@@ -178,24 +152,24 @@ func main() {
 	}
 	vals2 := make(map[string]int)
 	rows2 := make([]row, len(rows))
-	var root *row = nil
+	var root row
+	rootFound := false
 	c := 0
 	for _, r := range rows {
 		if r.left == "root" {
-			root = &r
+			root = r
+			rootFound = true
 		} else {
 			rows2[c] = r
 			c++
 		}
 	}
 	rows2 = rows2[:c]
-	if root == nil {
-		panic(nil)
-	}
+	assert(rootFound)
 	for k, v := range vals {
 		vals2[k] = v
 	}
 	delete(vals2, "humn") // in my data humn is a known number, not result of op
 	part1(rows, vals)     // must be done AFTER vals2 constructed, since vals mutated
-	part2(rows2, vals2, *root)
+	part2(rows2, vals2, root)
 }
