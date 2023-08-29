@@ -87,9 +87,6 @@ func wallMod(i int, n int) int {
 	if i < 0 {
 		panic(nil)
 	}
-	if i < 0 {
-		panic(nil)
-	}
 	return (i-1)%(n-2) + 1
 }
 
