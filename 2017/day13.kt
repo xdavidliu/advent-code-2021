@@ -27,11 +27,8 @@ fun main() {
     // - packet is at depth k, then moves to k + 1
     // - scanner is at position k, then moves to (k + 1) % range
     // - want to count when scanner is at position 0 at beginning of picosecond
-    val ans = run(0, layers)
-    println("part 1 = $ans")  // 2160
-    for (delay in 0..4000000) {
-        if (0 == run(delay, layers, true)) {
-            println("part 2 = $delay")  // 3907470
-        }
-    }
+    val ans1 = run(0, layers)
+    println("part 1 = $ans1")  // 2160
+    val ans2 = generateSequence(0) {it + 1}.find { 0 == run(it, layers, true) }
+    println("part 2 = $ans2")  // 3907470
 }
