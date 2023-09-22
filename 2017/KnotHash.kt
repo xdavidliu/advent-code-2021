@@ -1,11 +1,20 @@
-fun knotHash(input: String): String {
-    val list = run(256, toSequence(input), 64)
-    return toHex(reduce256(list))
-}
+fun knotHash(input: String) = toHex(denseHash(input))
+
+fun knotHashBits(input: String) = toBinary(denseHash(input))
+
+fun denseHash(input: String): List<Int> =
+    reduce256(run(256, toSequence(input), 64))
 
 fun toSequence(input: String) = input.map { it.code } + listOf(17, 31, 73, 47, 23)
 
-fun toHex(small: List<Int>) = small.map { String.format("%02x", it) }.joinToString("")
+// https://stackoverflow.com/a/56970434/2990344
+fun toHex(small: List<Int>) = small.map { "%02x".format(it) }.joinToString("")
+
+fun toBinary(small: List<Int>) = small.map { binaryFormat(it) }.joinToString("")
+
+// cannot do "%08b" because doesn't work in C
+// https://stackoverflow.com/a/35926790/2990344
+fun binaryFormat(k: Int) = "%8s".format(Integer.toBinaryString(k)).replace(' ', '0')
 
 fun reduce256(big: List<Int>): List<Int> {
     val small = mutableListOf<Int>()
