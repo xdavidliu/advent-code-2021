@@ -66,7 +66,6 @@ val modReg = binaryIns("mod")
 val rcvReg = unaryIns("rcv")
 val jgzReg = binaryIns("jgz")
 
-// cleanup todo: instructions can probably be a global variable
 open class Program() {
     var played = -1L
     var position = 0
