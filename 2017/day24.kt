@@ -1,9 +1,5 @@
 import java.io.File
 
-fun main() {
-    foo1()
-}
-
 fun <T> dropAt(lst: List<T>, ind: Int) = lst.take(ind) + lst.drop(ind + 1)
 
 fun strength(port: List<Int>) = port[0] + port[1]
@@ -31,7 +27,7 @@ fun recurse(port: List<Int>, ports: List<List<Int>>, want: Int, total: Int) {
     }
 }
 
-fun foo1() {
+fun main() {
     val ports = File("/tmp/data.txt").readLines().map { line ->
         line.split("/").map { word -> word.toInt() }
     }
