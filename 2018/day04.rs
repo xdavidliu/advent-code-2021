@@ -7,8 +7,6 @@ use regex::Regex;
 // regex = "1.9.5"
 // lazy_static = "1.4.0"
 
-// todo: remove date entirely, since everything happens between 00:00 and 01:00
-
 enum Record {
     Sleep(Time),
     Wake(Time),
@@ -16,15 +14,7 @@ enum Record {
 }
 
 struct Time {
-    date: Date,
-    hours: u32,
     minutes: u32
-}
-
-struct Date {
-    year: u32,
-    month: u32,
-    day: u32
 }
 
 // https://docs.rs/regex/latest/regex/#avoid-re-compiling-regexes-especially-in-a-loop
@@ -39,12 +29,6 @@ lazy_static! {
 fn extract_time(s: &str) -> Time {
     let caps = TIME_REGEX.captures(s).unwrap();
     Time {
-        date: Date {
-            year: caps.get(1).unwrap().as_str().parse().unwrap(),
-            month: caps.get(2).unwrap().as_str().parse().unwrap(),
-            day: caps.get(3).unwrap().as_str().parse().unwrap()
-        },
-        hours: caps.get(4).unwrap().as_str().parse().unwrap(),
         minutes: caps.get(5).unwrap().as_str().parse().unwrap()
     }
 }
@@ -90,7 +74,7 @@ fn most_sleep(records: &[Record]) -> &u32 {
             }
             Record::Wake(t) => {
                 let start = start_sleep.unwrap();
-                let dt = (t.hours - start.hours) * 60 + t.minutes - start.minutes;
+                let dt = t.minutes - start.minutes;
                 // https://stackoverflow.com/a/73837573/2990344
                 *minutes_asleep.entry(current_guard.unwrap()).or_default() += dt;
             }
