@@ -7,30 +7,24 @@ use regex::Regex;
 // regex = "1.9.5"
 // lazy_static = "1.4.0"
 
+// all sleep and wake happens between 00:00 and 01:00 so dates and hours can be ignored entirely
 enum Record {
-    Sleep(Time),
-    Wake(Time),
-    Begin(Time, u32)
-}
-
-struct Time {
-    minutes: u32
+    Sleep(u32),
+    Wake(u32),
+    Begin(u32, u32)
 }
 
 // https://docs.rs/regex/latest/regex/#avoid-re-compiling-regexes-especially-in-a-loop
 lazy_static! {
     static ref TIME_REGEX: Regex =
-        Regex::new(r"\[(\d\d\d\d)-(\d\d)-(\d\d) (\d\d):(\d\d)\]").unwrap();
+        Regex::new(r"\[.+:(\d\d)\]").unwrap();
 
     static ref GUARD_REGEX: Regex =
         Regex::new(r"Guard #(\d+)").unwrap();
 }
 
-fn extract_time(s: &str) -> Time {
-    let caps = TIME_REGEX.captures(s).unwrap();
-    Time {
-        minutes: caps.get(5).unwrap().as_str().parse().unwrap()
-    }
+fn extract_time(s: &str) -> u32 {
+    TIME_REGEX.captures(s).unwrap().get(1).unwrap().as_str().parse().unwrap()
 }
 
 fn extract_guard(s: &str) -> u32 {
@@ -38,19 +32,12 @@ fn extract_guard(s: &str) -> u32 {
 }
 
 // note rust crate regex doesn't match entire string, so capture works
-// as long as any match is found
-// [1518-07-18 00:46] wakes up
 fn record_from_string(s: &str) -> Record {
     let t = extract_time(s);
-    if s.ends_with("wakes up") {
-        Record::Wake(t)
-    } else if s.ends_with("falls asleep") {
-        Record::Sleep(t)
-    } else if s.ends_with("begins shift") {
-        Record::Begin(t, extract_guard(s))
-    } else {
-        panic!();
-    }
+    if s.ends_with("wakes up") { Record::Wake(t) }
+    else if s.ends_with("falls asleep") { Record::Sleep(t) }
+    else if s.ends_with("begins shift") { Record::Begin(t, extract_guard(s)) }
+    else { panic!(); }
 }
 
 fn read_records() -> Vec<Record> {
@@ -66,15 +53,10 @@ fn most_sleep(records: &[Record]) -> &u32 {
     let mut minutes_asleep: HashMap<&u32, u32> = HashMap::new();
     for r in records {
         match r {
-            Record::Begin(_, id) => {
-                current_guard = Some(id);
-            }
-            Record::Sleep(t) => {
-                start_sleep = Some(t);
-            }
+            Record::Begin(_, id) => { current_guard = Some(id); }
+            Record::Sleep(t) => { start_sleep = Some(t); }
             Record::Wake(t) => {
-                let start = start_sleep.unwrap();
-                let dt = t.minutes - start.minutes;
+                let dt = t - start_sleep.unwrap();
                 // https://stackoverflow.com/a/73837573/2990344
                 *minutes_asleep.entry(current_guard.unwrap()).or_default() += dt;
             }
@@ -99,26 +81,12 @@ fn main() {
     let mut counts_map = HashMap::new();
     for r in &records {
         match r {
-            Record::Begin(_, id) => {
-                current_guard = Some(id);
-            }
-            Record::Sleep(t) => {
-                // if current_guard.unwrap() == best {
-                //     start_sleep = Some(t);
-                // }
-                start_sleep = Some(t);
-            }
+            Record::Begin(_, id) => { current_guard = Some(id); }
+            Record::Sleep(t) => { start_sleep = Some(t); }
             Record::Wake(t) => {
-                // if current_guard.unwrap() == best {
-                //     let sleep_min = start_sleep.unwrap().minutes;
-                //     let wake_min = t.minutes;
-                //     for i in sleep_min..wake_min { counts[i as usize] += 1; }
-                // }
                 let counts =
                     counts_map.entry(current_guard.unwrap()).or_insert([0u32; 60]);
-                let sleep_min = start_sleep.unwrap().minutes;
-                let wake_min = t.minutes;
-                for i in sleep_min..wake_min { counts[i as usize] += 1; }
+                for i in *start_sleep.unwrap()..*t { counts[i as usize] += 1; }
             }
         }
     }
