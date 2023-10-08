@@ -2,7 +2,7 @@ use std::collections::HashMap;
 
 fn main() {
     println!("part 1 = {}", score(468, 71843));  // 385820
-    println!("part 2 = {}", score(468, 7184300));  // 385820 too low
+    println!("part 2 = {}", score(468, 7184300));  // 3156297594
 }
 
 fn insert_after(a: i64, value: i64, prev: &mut HashMap<i64, i64>, next: &mut HashMap<i64, i64>) {
