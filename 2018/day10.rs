@@ -7,16 +7,6 @@ extern crate lazy_static;
 // regex = "1.9.6"
 
 fn main() {
-    foo1();
-}
-
-fn foo2() {
-    for x in (1..5).rev() {
-        print!("{}", x);
-    }
-}
-
-fn foo1() {
     let mut v = read_points("/tmp/data.txt");
     let part2 = 10_813;  // obtained by trial and error
     println!("part 2 = {}", part2);
