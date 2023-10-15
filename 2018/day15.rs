@@ -145,7 +145,6 @@ impl Problem {
         units_order.sort();
         let mut arrived = HashSet::new();
         for point in units_order {
-            // FOO
             if arrived.contains(&point) {
                 // forgetting this cost hours of debugging. This is edge case where
                 // a unit moved right into an open spot that was just recently cleared up.
