@@ -22,13 +22,6 @@ fn to_four_array(slice: &[usize]) -> [usize; 4] {
     arr
 }
 
-fn main() {
-    foo1();
-    // want int -> list of names, and combine things with same int
-    // by doing set intersection. Wait, just make it a set of names;
-    // that's so much easier.
-}
-
 fn split_args(pat: &str, comma_separated_positive_ints: &str) -> Vec<usize> {
     comma_separated_positive_ints
         .split(pat)
@@ -55,7 +48,7 @@ fn collapse(funcs: &mut Vec<Vec<String>>) {
     }
 }
 
-fn foo1() {
+fn main() {
     let path = "/home/xdavidliu/Documents/temp/data.txt";
     let text = read_to_string(path).unwrap();
     let mut lines = text.lines();
