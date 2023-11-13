@@ -3,11 +3,11 @@ use std::collections::HashSet;
 fn main() {
     let mut r3: u64 = 0;
     let mut seen = HashSet::new();
-    let mut seen_vec = Vec::new();
+    let mut last_r3 = 0;
     let mut part1 = false;
     while !seen.contains(&r3) {
         seen.insert(r3);
-        seen_vec.push(r3);
+        last_r3 = r3;
         let mut r2 = r3 | 65536;
         r3 = f(14070682, r2);
         while 256 <= r2 {
@@ -19,7 +19,7 @@ fn main() {
             part1 = true;
         }
     }
-    println!("part 2 = {}", seen_vec.last().unwrap());  // 8307757
+    println!("part 2 = {last_r3}");  // 8307757
 }
 
 fn f(a: u64, b: u64) -> u64 {
