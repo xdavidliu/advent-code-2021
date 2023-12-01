@@ -54,5 +54,4 @@ int main() {
         std::cout << "part 1 = " << sum1 << '\n';  // 55172
         std::cout << "part 2 = " << sum2 << '\n';  // 54925
     }
-    std::cout << value2("2tnvkdzrtshfzxvzpc") << '\n';
 }
