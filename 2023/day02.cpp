@@ -132,6 +132,6 @@ int main() {
             part2 += power(game);
         }
         std::cout << "part 1 = " << part1 << '\n';  // 2265
-        std::cout << "part 2 = " << part2 << '\n';  // 64097 too low
+        std::cout << "part 2 = " << part2 << '\n';  // 64097
     }
 }
