@@ -9,6 +9,9 @@
 
 struct Row {
     long destination, source, range;
+    bool operator<(const Row &other) const {
+      return source < other.source;
+    }
 };
 
 void my_assert(const bool cond) {
@@ -27,6 +30,7 @@ std::vector<Row> read_rows(std::ifstream &fs) {
         iss >> row.range;
         rows.push_back(row);
     }
+    std::sort(rows.begin(), rows.end());
     return rows;
 }
 
@@ -93,7 +97,7 @@ void part2(const std::vector<long> &seeds, const std::vector<std::vector<Row>> &
 }
 
 int main() {
-    const char path[] = "/usr/local/google/home/xdavidliu/Documents/temp/example.txt";
+    const char path[] = "/home/xdavidliu/Documents/temp/data.txt";
     if (auto fs = std::ifstream(path)) {
         std::string line;
         std::getline(fs, line);  // line.substr(2 + line.find(": "))
