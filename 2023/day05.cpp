@@ -1,6 +1,5 @@
 #include <iostream>
 #include <fstream>
-#include <exception>
 #include <string>
 #include <sstream>
 #include <limits>
@@ -10,7 +9,10 @@
 struct Row {
     long destination, source, range;
     bool operator<(const Row &other) const {
-      return source < other.source;
+        return source < other.source;
+    }
+    [[nodiscard]] long right() const {
+        return source + range - 1;
     }
 };
 
@@ -24,7 +26,7 @@ std::vector<Row> read_rows(std::ifstream &fs) {
     std::vector<Row> rows;
     while (std::getline(fs, line) && !line.empty()) {
         std::istringstream iss(line);
-        Row row;
+        Row row = {0, 0, 0};
         iss >> row.destination;
         iss >> row.source;
         iss >> row.range;
@@ -59,41 +61,69 @@ void part1(const std::vector<long> &seeds, const std::vector<std::vector<Row>> &
     std::cout << "part 1 = " << small << '\n';  // 84470622
 }
 
-void match_row(std::vector<std::pair<long, long>> &out, const long source, const long range, const Row &row) {
-  const auto left = std::max(source, row.source);
-  const auto right = std::min(source + range, row.source + row.range);
-  if (left <= right) {
-    const auto out_left = left + row.destination - row.source;
-    const auto out_right = right + row.destination - row.source;
-    out.emplace_back(out_left, out_right);
-  }
+long right_side(const long source, const long range) {
+    return source + range - 1;
 }
 
-void match_map(std::vector<std::pair<long, long>> &out, const long source, const long range, const std::vector<Row> &map) {
-  for (const auto &row : map) {
-    match_row(out, source, range, row);
-  }
+// seeds mutable for convenience in chopping off right part of seed
+void match_map(std::vector<std::pair<long, long>> &out, std::vector<std::pair<long, long>> &seeds, const std::vector<Row> &map) {
+    auto row = map.cbegin();
+    auto seed = seeds.begin();
+    while (row != map.cend() && seed != seeds.end()) {
+        if (row->right() < seed->first) { ++row; continue; }
+        if (seed->second < row->source) {
+            out.emplace_back(seed->first, seed->second);
+            ++seed;
+            continue;
+        }
+        if (seed->first < row->source) {
+            out.emplace_back(seed->first, row->source - 1);
+        }
+        my_assert(seed->second >= row->source);
+        const auto left = std::max(seed->first, row->source);
+        const auto right = std::min(seed->second, row->right());
+        if (left <= right) {
+            const auto out_left = left + row->destination - row->source;
+            const auto out_right = right + row->destination - row->source;
+            out.emplace_back(out_left, out_right);
+        }
+        if (right == seed->second) {
+            ++seed;
+        } else {
+            seed->first = right + 1;  // hack
+            ++row;
+        }
+    }
+    while (seed != seeds.end()) {
+        out.emplace_back(seed->first, seed->second);
+        ++seed;
+    }
 }
 
-/*
- * wait this is wrong
- * must match all parts
- * */
+void show(const std::vector<std::pair<long, long>> &pairs) {
+    for (const auto &[first, second] : pairs) {
+        std::cout << first << '-' << second << ' ';
+    }
+    std::cout << '\n';
+}
 
 void part2(const std::vector<long> &seeds, const std::vector<std::vector<Row>> &maps) {
-  std::vector<std::pair<long, long>> pairs_from, pairs_to;
-  for (std::size_t i = 0; i < seeds.size(); i += 2) {
-    pairs_from.emplace_back(seeds[i], seeds[i+1]);
-  }
-  for (const auto &map : maps) {
-    pairs_to.clear();
-    for (const auto &[source, range] : pairs_from) {
-      match_map(pairs_to, source, range, map);
+    std::vector<std::pair<long, long>> pairs_from, pairs_to;
+    for (std::size_t i = 0; i < seeds.size(); i += 2) {
+        pairs_from.emplace_back(seeds[i], seeds[i] + seeds[i+1] - 1);
     }
-    pairs_to.swap(pairs_from);
-  }
-  const auto ans = std::min_element(pairs_from.cbegin(), pairs_from.cend())->first;
-  std::cout << "part 2 = " << ans << '\n';  // too high
+    for (const auto &map : maps) {
+        if (pairs_from.empty()) { std::cout << "empty\n"; break; }
+        pairs_to.clear();
+        std::sort(pairs_from.begin(), pairs_from.end());
+//        show(pairs_from);
+        match_map(pairs_to, pairs_from, map);
+        pairs_to.swap(pairs_from);
+        // todo for performance: merge pairs_from
+    }
+//    show(pairs_from);
+    const auto ans = std::min_element(pairs_from.cbegin(), pairs_from.cend());
+    std::cout << "part 2 = " << ans->first << '\n';  // 26714516
 }
 
 int main() {
@@ -105,7 +135,6 @@ int main() {
         std::vector<long> seeds;
         long num;
         while (iss >> num) { seeds.push_back(num); }
-        std::cout << '\n';
         std::getline(fs, line);  // empty
         std::vector<std::vector<Row>> maps;
         while (fs) { maps.push_back(read_rows(fs)); }
