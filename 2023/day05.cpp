@@ -100,13 +100,6 @@ void match_map(std::vector<std::pair<long, long>> &out, std::vector<std::pair<lo
     }
 }
 
-void show(const std::vector<std::pair<long, long>> &pairs) {
-    for (const auto &[first, second] : pairs) {
-        std::cout << first << '-' << second << ' ';
-    }
-    std::cout << '\n';
-}
-
 void part2(const std::vector<long> &seeds, const std::vector<std::vector<Row>> &maps) {
     std::vector<std::pair<long, long>> pairs_from, pairs_to;
     for (std::size_t i = 0; i < seeds.size(); i += 2) {
@@ -116,12 +109,10 @@ void part2(const std::vector<long> &seeds, const std::vector<std::vector<Row>> &
         if (pairs_from.empty()) { std::cout << "empty\n"; break; }
         pairs_to.clear();
         std::sort(pairs_from.begin(), pairs_from.end());
-//        show(pairs_from);
         match_map(pairs_to, pairs_from, map);
         pairs_to.swap(pairs_from);
         // todo for performance: merge pairs_from
     }
-//    show(pairs_from);
     const auto ans = std::min_element(pairs_from.cbegin(), pairs_from.cend());
     std::cout << "part 2 = " << ans->first << '\n';  // 26714516
 }
