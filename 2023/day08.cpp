@@ -27,8 +27,8 @@ public:
             left(std::move(left)),
             right(std::move(right))
             {}
-    void update(std::string &place, std::size_t &ind) const {
-        switch (instructions[ind]) {
+    void update(std::string &place, const std::size_t steps) const {
+        switch (instructions[steps % instructions.size()]) {
             case 'L' : {
                 place = left.at(place);
                 break;
@@ -38,17 +38,37 @@ public:
                 break;
             }
         }
-        ind = (ind + 1) % instructions.size();
     }
     // clang suggested nodiscard; whatever
     [[nodiscard]] std::size_t count_steps_until(std::string_view start, std::string_view end) const {
         std::string place(start);
-        std::size_t steps = 0, ind = 0;
+        std::size_t steps = 0;
         while (place != end) {
-            update(place, ind);
+            update(place, steps);
             ++steps;
         }
         return steps;
+    }
+    void foo() const {
+        for (const auto &[key, value] : left) {
+            if (key.back() != 'A') { continue; }
+            std::string place(key);
+            std::map<std::pair<std::string, std::size_t>, std::size_t> seen;
+            std::size_t steps = 0;
+            seen[std::make_pair(place, steps % instructions.size())] = steps;
+            while (true) {
+                update(place, steps);
+                ++steps;
+                // https://stackoverflow.com/a/1409465/2990344
+                // https://en.cppreference.com/w/cpp/container/map/insert
+                auto [iter, succ] = seen.insert({{place, steps % instructions.size()}, steps});
+                if (!succ) {
+                    std::cout << "start " << key << ", cycle found at " << iter->second;
+                    std::cout << " and " << steps << '\n';
+                    break;
+                }
+            }
+        }
     }
 };
 
@@ -68,4 +88,5 @@ Desert read(const char *path) {
 int main() {
     auto desert = read("/home/xdavidliu/Documents/temp/data.txt");
     std::cout << "part 1 = " << desert.count_steps_until("AAA", "ZZZ") << '\n';  // 19241
+    desert.foo();
 }
