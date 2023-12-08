@@ -5,6 +5,7 @@
 #include <string_view>
 #include <exception>
 #include <vector>
+#include <numeric>
 
 void
 insert(std::string_view line, std::map<std::string, std::string> &left, std::map<std::string, std::string> &right) {
@@ -13,6 +14,17 @@ insert(std::string_view line, std::map<std::string, std::string> &left, std::map
     const auto right_val = line.substr(2 + line.find(", "), 3);
     left[std::string(key)] = std::string(left_val);
     right[std::string(key)] = std::string(right_val);
+}
+
+void my_assert(bool cond) {
+  if (!cond) {
+    throw std::exception();
+  }
+}
+
+std::size_t lcm(const std::vector<std::size_t> &ns) {
+  const auto op = [] (const std::size_t a, const std::size_t b) { return std::lcm(a, b); };
+  return std::accumulate(ns.cbegin(), ns.cend(), 1, op);
 }
 
 class Desert {
@@ -50,7 +62,8 @@ public:
         }
         return steps;
     }
-    void foo() const {
+    void part2() const {
+        std::vector<std::size_t> periods;
         for (const auto &[key, value] : left) {
             if (key.back() != 'A') { continue; }
             std::string place(key);
@@ -66,16 +79,24 @@ public:
                 // https://en.cppreference.com/w/cpp/container/map/insert
                 auto [iter, succ] = seen.insert({{place, steps % instructions.size()}, steps});
                 if (!succ) {
-                    std::cout << "start " << key << ", cycle found at " << iter->second;
-                    std::cout << " and " << steps << ", with z at ";
-                    for (const auto &x : z_steps) {
-                        std::cout << x << ' ';
-                    }
-                    std::cout << '\n';
+                    my_assert(z_steps.size() == 1);  // data happens to have this
+                    const auto period = steps - iter->second;
+                    my_assert(z_steps.front() == period);  // data also happens to have this
+                    periods.push_back(period);
                     break;
                 }
             }
         }
+        std::cout << "for part 2, take these and find LCM: ";
+        for (const auto &p : periods) {
+          std::cout << p << ' ';
+        }
+        std::cout << "\nthat's 9606140307013\n";
+        // gives wrong result because it probably uses formula
+        //   lcm(a, b) = a b / gcd(a, b)
+        // and in the process it overflows even std::size_t.
+        // std::cout << "part 2 = " << lcm(periods) << '\n';
+
     }
 };
 
@@ -93,7 +114,19 @@ Desert read(const char *path) {
 }
 
 int main() {
-    auto desert = read("/home/xdavidliu/Documents/temp/data.txt");
+    auto desert = read("/tmp/data.txt");
     std::cout << "part 1 = " << desert.count_steps_until("AAA", "ZZZ") << '\n';  // 19241
-    desert.foo();
+    desert.part2();
+    //                   iter->second   steps      z_steps.front()
+    // start AAA, cycle found at 2 and 19243, with z at 19241
+    // start BBA, cycle found at 2 and 21411, with z at 21409
+    // start BLA, cycle found at 4 and 11657, with z at 11653
+    // start DRA, cycle found at 4 and 14367, with z at 14363
+    // start NFA, cycle found at 2 and 12739, with z at 12737
+    // start PSA, cycle found at 3 and 15992, with z at 15989
+    //
+    // interesting that it only found one z value for each!
+    // also interesting, the z above is exactly equal to the period, which is
+    // difference between first two numbers. That means there's a z at every
+    // simple multiple. So just find LCM of all of the Z's here and you're done.
 }
