@@ -21,6 +21,8 @@ std::size_t count_steps(
         const std::map<std::string, std::string> &right,
         const std::function<bool(const std::vector<std::string> &)>& done) {
     std::size_t ind = 0, steps = 0;
+    std::map<std::string, std::size_t> seen;
+
     while (!done(places)) {
         for (auto &place : places) {
             switch (instructions[ind]) {
@@ -68,7 +70,10 @@ int main() {
         std::map<std::string, std::string> left, right;
         while (std::getline(fs, line)) { insert(line, left, right); }
 
-        std::cout << "part 1 = " << solve1(instructions, left, right) << '\n';  // 19241
-        std::cout << "part 2 = " << solve2(instructions, left, right) << '\n';  // 19241
+//        std::cout << "part 1 = " << solve1(instructions, left, right) << '\n';  // 19241
+        std::cout << "part 2 = " << solve2(instructions, left, right) << '\n';  //
     }
 }
+
+// strategy: do each one individually and look for cycles, and look for when the cycles
+// all converge
