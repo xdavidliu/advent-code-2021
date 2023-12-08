@@ -4,6 +4,7 @@
 #include <map>
 #include <string_view>
 #include <exception>
+#include <vector>
 
 void
 insert(std::string_view line, std::map<std::string, std::string> &left, std::map<std::string, std::string> &right) {
@@ -56,15 +57,21 @@ public:
             std::map<std::pair<std::string, std::size_t>, std::size_t> seen;
             std::size_t steps = 0;
             seen[std::make_pair(place, steps % instructions.size())] = steps;
+            std::vector<std::size_t> z_steps;
             while (true) {
                 update(place, steps);
                 ++steps;
+                if (place.back() == 'Z') { z_steps.push_back(steps); }
                 // https://stackoverflow.com/a/1409465/2990344
                 // https://en.cppreference.com/w/cpp/container/map/insert
                 auto [iter, succ] = seen.insert({{place, steps % instructions.size()}, steps});
                 if (!succ) {
                     std::cout << "start " << key << ", cycle found at " << iter->second;
-                    std::cout << " and " << steps << '\n';
+                    std::cout << " and " << steps << ", with z at ";
+                    for (const auto &x : z_steps) {
+                        std::cout << x << ' ';
+                    }
+                    std::cout << '\n';
                     break;
                 }
             }
