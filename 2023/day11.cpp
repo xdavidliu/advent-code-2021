@@ -12,8 +12,6 @@ enum class Direction {
     NORTH, EAST, SOUTH, WEST
 };
 
-// 580 too low
-
 // todo: can probably infer this start_replace, though manually is easier
 constexpr char start_replace = 'J';
 constexpr char file_path[] = "/home/xdavidliu/Documents/temp/data.txt";
