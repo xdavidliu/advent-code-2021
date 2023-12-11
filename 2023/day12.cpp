@@ -71,21 +71,33 @@ std::vector<std::pair<std::size_t, std::size_t>> find_galaxies(const std::vector
   return galaxies;
 }
 
+long solve_with_multiplier(
+    const std::vector<std::pair<std::size_t, std::size_t>> &galaxies,
+    const std::vector<std::size_t> &empty_rows,
+    const std::vector<std::size_t> &empty_cols,
+    const std::size_t empty_multiplier)
+{
+  long sum = 0;
+  for (std::size_t i = 0; i+1 < galaxies.size(); ++i) {
+    const auto [ri, ci] = galaxies[i];
+    for (std::size_t k = i+1; k < galaxies.size(); ++k) {
+      const auto [rk, ck] = galaxies[k];
+      sum += std::abs(static_cast<long>(rk) - static_cast<long>(ri));
+      sum += std::abs(static_cast<long>(ck) - static_cast<long>(ci));
+      sum += (empty_multiplier - 1) * count_between(ri, rk, empty_rows);
+      sum += (empty_multiplier - 1) * count_between(ci, ck, empty_cols);
+    }
+  }
+  return sum;
+}
+
 int main() {
   const auto grid = read_grid("/tmp/data.txt");
   const auto empty_rows = find_empty_rows(grid);
   const auto empty_cols = find_empty_cols(grid);
   const auto galaxies = find_galaxies(grid);
-  long part1 = 0;
-  for (std::size_t i = 0; i+1 < galaxies.size(); ++i) {
-    const auto [ri, ci] = galaxies[i];
-    for (std::size_t k = i+1; k < galaxies.size(); ++k) {
-      const auto [rk, ck] = galaxies[k];
-      part1 += std::abs(static_cast<long>(rk) - static_cast<long>(ri));
-      part1 += std::abs(static_cast<long>(ck) - static_cast<long>(ci));
-      part1 += count_between(ri, rk, empty_rows);
-      part1 += count_between(ci, ck, empty_cols);
-    }
-  }
+  const auto part1 = solve_with_multiplier(galaxies, empty_rows, empty_cols, 2);
   std::cout << "part 1 = " << part1 << '\n';  // 9599070
+  const auto part2 = solve_with_multiplier(galaxies, empty_rows, empty_cols, 1000000);
+  std::cout << "part 2 = " << part2 << '\n';  // 842645913794
 }
