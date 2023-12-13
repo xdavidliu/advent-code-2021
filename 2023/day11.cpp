@@ -1,213 +1,103 @@
 #include <iostream>
-#include <string>
-#include <fstream>
 #include <vector>
+#include <string>
 #include <exception>
-#include <utility>
-#include <deque>
-#include <set>
+#include <fstream>
 #include <algorithm>
+#include <cmath>
 
-enum class Direction {
-    NORTH, EAST, SOUTH, WEST
-};
+// hypothesis; it's just manhattan distance
 
-// todo: can probably infer this start_replace, though manually is easier
-constexpr char start_replace = 'J';
-constexpr char file_path[] = "/home/xdavidliu/Documents/temp/data.txt";
-static bool left_handed = false;
+bool is_dot(const char ch) { return ch == '.'; }
 
-//constexpr char start_replace = '7';
-//constexpr char file_path[] = "/home/xdavidliu/Documents/temp/example.txt";
-//static bool left_handed = true;
-
-constexpr Direction initial_direction = Direction::SOUTH;  // assumes vertical
-
-using Point = std::pair<std::size_t, std::size_t>;
-
-Point shift(const Point &pt, const Direction dir) {
-    switch (dir) {
-        case Direction::NORTH:
-            return {pt.first - 1, pt.second};
-        case Direction::SOUTH:
-            return {pt.first + 1, pt.second};
-        case Direction::EAST:
-            return {pt.first, pt.second + 1};
-        case Direction::WEST:
-            return {pt.first, pt.second - 1};
-    }
+long count_between(const std::size_t left, const std::size_t right, const std::vector<std::size_t> &indices) {
+  if (left > right) {
+    return count_between(right, left, indices);
+  }
+  const auto first_empty_between = std::upper_bound(indices.cbegin(), indices.cend(), left);
+  const auto first_empty_after = std::upper_bound(indices.cbegin(), indices.cend(), right);
+  return static_cast<long>(first_empty_after - first_empty_between);
 }
 
-Direction difference(const Point &to, const Point &from) {
-    if (to.first == from.first) {
-        return to.second < from.second ? Direction::WEST : Direction::EAST;
-    } else {
-        return to.first < from.first ? Direction::NORTH : Direction::SOUTH;
+std::vector<std::string> read_grid(const char *filepath) {
+  if (auto fs = std::ifstream(filepath)) {
+    std::vector<std::string> grid;
+    std::string line;
+    while (std::getline(fs, line)) {
+      grid.push_back(line);
     }
-}
-
-Direction interior_direction(const Direction move_dir) {
-    switch (move_dir) {
-        case Direction::NORTH:
-            return left_handed ? Direction::WEST : Direction::EAST;
-        case Direction::SOUTH:
-            return left_handed ? Direction::EAST : Direction::WEST;
-        case Direction::EAST:
-            return left_handed ? Direction::NORTH : Direction::SOUTH;
-        case Direction::WEST:
-            return left_handed ? Direction::SOUTH : Direction::NORTH;
-    }
-}
-
-std::pair<std::size_t, std::size_t> find_start(const std::vector<std::string> &grid) {
-    for (std::size_t r = 0; r < grid.size(); ++r) {
-        const auto &row = grid[r];
-        for (std::size_t c = 0; c < row.size(); ++c) {
-            if (row[c] == 'S') {
-                return {r, c};
-            }
-        }
-    }
+    return grid;
+  } else {
     throw std::exception();
+  }
 }
 
-char replace(const char grid_ch) {
-    return grid_ch == 'S' ? start_replace : grid_ch;
+std::vector<std::size_t> find_empty_rows(const std::vector<std::string> &grid) {
+  std::vector<std::size_t> empty_rows;
+  for (std::size_t r = 0; r < grid.size(); ++r) {
+    if (std::all_of(grid[r].cbegin(), grid[r].cend(), is_dot)) {
+      empty_rows.push_back(r);
+    }
+  }
+  return empty_rows;
 }
 
-std::vector<Point> two_neighbors(
-        const std::vector<std::string> &grid, const Point &point) {
-    switch (replace(grid[point.first][point.second])) {
-        case '-':
-            return {shift(point, Direction::EAST), shift(point, Direction::WEST)};
-        case '|':
-            return {shift(point, Direction::NORTH), shift(point, Direction::SOUTH)};
-        case 'L':
-            return {shift(point, Direction::NORTH), shift(point, Direction::EAST)};
-        case 'J':
-            return {shift(point, Direction::NORTH), shift(point, Direction::WEST)};
-        case '7':
-            return {shift(point, Direction::SOUTH), shift(point, Direction::WEST)};
-        case 'F':
-            return {shift(point, Direction::SOUTH), shift(point, Direction::EAST)};
-        default:
-            throw std::exception();
+std::vector<std::size_t> find_empty_cols(const std::vector<std::string> &grid) {
+  std::vector<std::size_t> empty_cols;
+  for (std::size_t c = 0; c < grid.front().size(); ++c) {
+    bool col_empty = true;
+    for (std::size_t r = 0; r < grid.size(); ++r) {
+      if (!is_dot(grid[r][c])) {
+        col_empty = false;
+        break;
+      }
     }
+    if (col_empty) {
+      empty_cols.push_back(c);
+    }
+  }
+  return empty_cols;
 }
 
-std::vector<Point> compute_path_order(const std::set<Point> &path_seen, const std::vector<std::string> &grid) {
-    const auto is_vertical = [&grid](const Point &pt) {
-        return grid[pt.first][pt.second] == '|';
-    };
-    const auto found = std::find_if(path_seen.cbegin(), path_seen.cend(), is_vertical);
-    if (found == path_seen.cend()) {
-        std::cout << "loop without verticals; don't know what to do\n";
-        throw std::exception();
+std::vector<std::pair<std::size_t, std::size_t>> find_galaxies(const std::vector<std::string> &grid) {
+  std::vector<std::pair<std::size_t, std::size_t>> galaxies;
+  for (std::size_t r = 0; r < grid.size(); ++r) {
+    for (std::size_t c = 0; c < grid.front().size(); ++c) {
+      if (grid[r][c] == '#') {
+        galaxies.emplace_back(r, c);
+      }
     }
-    const auto initial_vertical = *found;
-    std::vector<Point> path_order;
-    path_order.push_back(initial_vertical);
-    Point next = shift(initial_vertical, initial_direction);
-    while (next != initial_vertical) {  // terminates when loops back
-        const auto prev = path_order.back();
-        path_order.push_back(next);
-        const auto nbs = two_neighbors(grid, next);
-        next = nbs[0] == prev ? nbs[1] : nbs[0];
-    }
-    path_order.push_back(initial_vertical);  // just to close the loop
-    return path_order;
+  }
+  return galaxies;
 }
 
-void bfs_bulk(
-        const std::set<Point> &path_seen, const std::vector<std::string> &grid,
-        std::set<Point> &bulk_seen, const Point &possible_bulk_point) {
-    constexpr Direction bulk_neighbors[] = {
-            Direction::NORTH, Direction::SOUTH, Direction::EAST, Direction::WEST
-    };
-    if (bulk_seen.count(possible_bulk_point) || path_seen.count(possible_bulk_point)) { return; }
-    std::deque<Point> que;
-    que.push_back(possible_bulk_point);
-    bulk_seen.insert(possible_bulk_point);
-    while (!que.empty()) {
-        const auto point = que.front();
-        que.pop_front();
-        for (const auto dir : bulk_neighbors) {
-            const auto nb = shift(point, dir);
-            if (nb.first < 0 || nb.first >= grid.size() || nb.second < 0 || nb.second >= grid.front().size()) {
-                std::cout << "out of bounds; use opposite bool for left_handed\n";
-                throw std::exception();
-            }
-            if (0 == path_seen.count(nb) && 0 == bulk_seen.count(nb)) {
-                que.push_back(nb);
-                bulk_seen.insert(nb);
-            }
-        }
+long solve_with_multiplier(
+    const std::vector<std::pair<std::size_t, std::size_t>> &galaxies,
+    const std::vector<std::size_t> &empty_rows,
+    const std::vector<std::size_t> &empty_cols,
+    const std::size_t empty_multiplier)
+{
+  long sum = 0;
+  for (std::size_t i = 0; i+1 < galaxies.size(); ++i) {
+    const auto [ri, ci] = galaxies[i];
+    for (std::size_t k = i+1; k < galaxies.size(); ++k) {
+      const auto [rk, ck] = galaxies[k];
+      sum += std::abs(static_cast<long>(rk) - static_cast<long>(ri));
+      sum += std::abs(static_cast<long>(ck) - static_cast<long>(ci));
+      sum += (empty_multiplier - 1) * count_between(ri, rk, empty_rows);
+      sum += (empty_multiplier - 1) * count_between(ci, ck, empty_cols);
     }
-}
-
-void solve2(const std::set<Point> &path_seen, const std::vector<std::string> &grid) {
-    const auto path_order = compute_path_order(path_seen, grid);
-    std::set<Point> bulk_seen;
-    auto prev_move_dir = Direction::SOUTH;  // garbage, will be overwritten in first iter;
-    for (
-            auto iter = path_order.cbegin();
-            // need to omit final one because of move_dir calculation
-            // final one assumed to be initial_vertical
-            iter != path_order.cend() && iter + 1 != path_order.cend();
-            ++iter)
-    {
-        const auto next_move_dir = difference(*(iter + 1), *iter);
-        if (iter != path_order.cbegin() && prev_move_dir != next_move_dir) {
-            // because otherwise tight u-turn looks down but it doesn't look left on before turning
-            bfs_bulk(path_seen, grid, bulk_seen, shift(*iter, interior_direction(prev_move_dir)));;
-        }
-        bfs_bulk(path_seen, grid, bulk_seen, shift(*iter, interior_direction(next_move_dir)));
-        prev_move_dir = next_move_dir;
-    }
-    std::cout << "part 2 = " << bulk_seen.size() << '\n';  // 589
-    // original sketch: go clockwise or counterclockwise around path
-    // have an "interior direction" (but how is it maintained around corners?)
-    // do bfs from each pipe; count total number seen
-    // if reach outside grid, you know you're on wrong side
-    // for 7, change from down to left and from up to right
-    // note when going around corner may need to bfs BOTH dirs of a corner
-}
-
-void solve(const std::vector<std::string> &grid) {
-    const auto [row, col] = find_start(grid);
-    std::deque<std::pair<Point, std::size_t>> que;
-    std::set<Point> seen;
-    que.push_back({{row, col}, 0});
-    seen.insert(Point{row, col});
-    std::size_t best = 0;
-    while (!que.empty()) {
-        // https://stackoverflow.com/q/25035691/2990344
-        // interesting: you cannot pop without copying
-        const auto pt = que.front();
-        que.pop_front();
-        const auto nbs = two_neighbors(grid, pt.first);
-        for (const auto &nb_pt: nbs) {
-            const Point coord = {nb_pt.first, nb_pt.second};
-            if (0 == seen.count(coord)) {
-                const auto nb_dist = pt.second + 1;
-                que.emplace_back(nb_pt, nb_dist);
-                seen.insert(coord);
-                best = std::max(best, nb_dist);
-            }
-        }
-    }
-    std::cout << "part 1 = " << best << '\n';  // 7063
-    solve2(seen, grid);
+  }
+  return sum;
 }
 
 int main() {
-    left_handed = left_handed;  // hack to get rid of compiler warnings
-    if (auto fs = std::ifstream(file_path)) {
-        std::string line;
-        std::vector<std::string> grid;
-        while (std::getline(fs, line)) {
-            grid.push_back(line);
-        }
-        solve(grid);
-    }
+  const auto grid = read_grid("/tmp/data.txt");
+  const auto empty_rows = find_empty_rows(grid);
+  const auto empty_cols = find_empty_cols(grid);
+  const auto galaxies = find_galaxies(grid);
+  const auto part1 = solve_with_multiplier(galaxies, empty_rows, empty_cols, 2);
+  std::cout << "part 1 = " << part1 << '\n';  // 9599070
+  const auto part2 = solve_with_multiplier(galaxies, empty_rows, empty_cols, 1000000);
+  std::cout << "part 2 = " << part2 << '\n';  // 842645913794
 }
