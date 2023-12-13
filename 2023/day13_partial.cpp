@@ -10,42 +10,24 @@
  * same for cols
  */
 
-std::vector<std::vector<int>> zeros(const int rows, const int cols) {
-    std::vector<int> zero_row(cols);
-    return std::vector<std::vector<int>>(rows, zero_row);
-}
-
-constexpr char rock = '#';
-
-auto count_down(const std::vector<std::string> &grid) {
-    auto out = zeros(grid.size(), grid.front().size());
-    for (int c = 0; c < grid.front().size(); ++c) {
-        int count = 0;
-        for (int r = 0; r < grid.size(); ++r) {
-            if (grid[r][c] == rock) {
-                ++count;
-            }
-            out[r][c] = count;
+bool row_before_is_mirror(const std::size_t row, const std::vector<std::string> &grid) {
+    for (std::size_t col = 0; col < grid.front().size(); ++col) {
+        for (std::size_t left = row - 1, right = row;  // https://stackoverflow.com/a/27882587/2990344
+             left != -1 && right != grid.size();
+             --left, ++right) {
+            if (grid[left][col] != grid[right][col]) { return false; }
         }
     }
-    return out;
+    return true;
 }
 
-auto count_up(const std::vector<std::string> &grid) {
-    auto out = zeros(grid.size(), grid.front().size());
-    for (int c = 0; c < grid.front().size(); ++c) {
-        int count = 0;
-        for (int r = grid.size() - 1; r != -1; --r) {
-            if (grid[r][c] == rock) {
-                ++count;
-            }
-            out[r][c] = count;
-        }
-    }
-    return out;
-}
+// todo: make sure not to call with empty left or right
+// make sure problem statement says empty does not count
+// col before is mirror
 
-// todo: count left, count right
+auto solve(const std::vector<std::string> &grid) {
+
+}
 
 auto read_grids(const char *filepath) {
     if (auto fs = std::ifstream(filepath)) {
