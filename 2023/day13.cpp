@@ -2,19 +2,27 @@
 #include <vector>
 #include <string>
 #include <fstream>
-#include <iterator>
 #include <algorithm>
+#include <map>
 
 constexpr int none = -1;
 
-void collect(
-        long &total,
+// todo idea: check if remaining has enough # and ? to work
+// do it in O(1) time by tracking remaining . and ? in register
+// if not, terminate instantly
+// DP? store table of answers?
+
+long collect(
         const std::string &grid,
         int i_grid,
         const std::vector<int> &sizes,
         int i_size,
-        int remain)
+        int remain,
+        std::map<std::tuple<int, int, int>, long> &table)
 {
+    const auto key = std::make_tuple(i_grid, i_size, remain);
+    const auto found = table.find(key);
+    if (found != table.cend()) { return found->second; }
     char ch;
     while (i_size != sizes.size() && i_grid != grid.size() && '?' != (ch = grid[i_grid])) {
         ++i_grid;
@@ -25,13 +33,15 @@ void collect(
                 ++i_size;
                 remain = none;
             } else {  // remain > 0
-                return;  // impossible, so terminate
+                table[key] = 0;
+                return 0;  // impossible, so terminate
             }
         } else {  // ch == '#'
             if (remain == none) {
                 remain = sizes[i_size] - 1;
             } else if (remain == 0) {
-                return;  // impossible
+                table[key] = 0;
+                return 0;  // impossible
             } else {  // remain > 0
                 --remain;
             }
@@ -39,32 +49,43 @@ void collect(
     }
     if (i_size == sizes.size()) {
         for (int i = i_grid; i < grid.size(); ++i) {
-            if (grid[i] == '#') { return; }
+            if (grid[i] == '#') {
+                table[key] = 0;
+                return 0;
+            }
         }
-        ++total;
+        table[key] = 1;
+        return 1;
     } else if (i_grid == grid.size()) {
-        if ( remain == 0 && i_size + 1 == sizes.size()) { ++total; }
+        if ( remain == 0 && i_size + 1 == sizes.size()) {
+            table[key] = 1;
+            return 1;
+        }
     } else {  // ch == '?' and haven't finished yet
         // try ? = #
+        long total = 0;
         if (remain == none) {
             const auto new_remain = sizes[i_size] - 1;
-            collect(total, grid, 1 + i_grid, sizes, i_size, new_remain);
+            total += collect(grid, 1 + i_grid, sizes, i_size, new_remain, table);
         } else if (remain > 0) {
-            collect(total, grid, 1 + i_grid, sizes, i_size, remain - 1);
+            total += collect(grid, 1 + i_grid, sizes, i_size, remain - 1, table);
         }
         // try ? = .
         if (remain == 0) {
-            collect(total, grid, 1 + i_grid, sizes, 1 + i_size, none);
+            total += collect(grid, 1 + i_grid, sizes, 1 + i_size, none, table);
         } else if (remain == none) {
-            collect(total, grid, 1 + i_grid, sizes, i_size, none);
+            total += collect(grid, 1 + i_grid, sizes, i_size, none, table);
         }
+        table[key] = total;
+        return total;
     }
+    table[key] = 0;
+    return 0;
 }
 
 long solve(const std::string &grid, const std::vector<int> &sizes) {
-    long total = 0;
-    collect(total, grid, 0, sizes, 0, none);
-    return total;
+    std::map<std::tuple<int, int, int>, long> table;
+    return collect(grid, 0, sizes, 0, none, table);
 }
 
 struct Problem {
@@ -77,7 +98,7 @@ auto split_nums(const std::string &list) {
     std::vector<int> nums;
     while (true) {
         const auto k = list.find(',', i);
-        if (k == list.npos) {
+        if (k == std::string::npos) {
             nums.push_back(std::stoi(list.substr(i)));
             break;
         } else {
@@ -105,7 +126,7 @@ auto times_five(const std::vector<int> &sizes) {
     return out;
 }
 
-void foo1() {
+int main() {
     std::vector<Problem> problems;
     if (auto fs = std::ifstream("/home/xdavidliu/Documents/temp/data.txt")) {
         long part1 = 0, part2 = 0;
@@ -116,20 +137,9 @@ void foo1() {
             part1 += solve(grid, sizes);
             const auto five_grid = times_five_with_questions(grid);
             const auto five_sizes = times_five(sizes);
-            std::cout << "working on " << grid << '\n';
             part2 += solve(five_grid, five_sizes);
         }
-        std::cout << "part 1 = " << part1 << '\n';
-        std::cout << "part 2 = " << part2 << '\n';
+        std::cout << "part 1 = " << part1 << '\n';  // 7017
+        std::cout << "part 2 = " << part2 << '\n';  // 527570479489
     }
-}
-
-void foo2() {
-    const std::string grid = "?###????????";
-    const std::vector<int> sizes = {3, 2, 1};
-    std::cout << solve(times_five_with_questions(grid), times_five(sizes)) << '\n';
-}
-
-int main() {
-    foo1();
 }
