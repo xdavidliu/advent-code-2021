@@ -4,12 +4,6 @@
 #include <vector>
 #include <exception>
 
-/*
- * idea: collect grid, also grid of counts above and below
- * only check rows where entire row has same number here
- * same for cols
- */
-
 bool row_before_is_mirror(const std::size_t row,
                           const std::vector<std::string>& grid,
                           const int target) {
