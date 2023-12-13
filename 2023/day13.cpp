@@ -7,11 +7,6 @@
 
 constexpr int none = -1;
 
-// todo idea: check if remaining has enough # and ? to work
-// do it in O(1) time by tracking remaining . and ? in register
-// if not, terminate instantly
-// DP? store table of answers?
-
 long collect(
         const std::string &grid,
         int i_grid,
