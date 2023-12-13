@@ -1,105 +1,135 @@
 #include <iostream>
-#include <fstream>
-#include <string>
 #include <vector>
+#include <string>
+#include <fstream>
+#include <iterator>
+#include <algorithm>
 
-auto question_positions(const std::string &line) {
-  std::vector<int> pos;
-  for (int i = 0; i < line.size(); ++i) {
-    if (line[i] == '?') { pos.push_back(i); }
-  }
-  return pos;
+constexpr int none = -1;
+
+void collect(
+        long &total,
+        const std::string &grid,
+        int i_grid,
+        const std::vector<int> &sizes,
+        int i_size,
+        int remain)
+{
+    char ch;
+    while (i_size != sizes.size() && i_grid != grid.size() && '?' != (ch = grid[i_grid])) {
+        ++i_grid;
+        if (ch == '.') {
+            if (remain == none) {
+                // do nothing
+            } else if (remain == 0) {  // just finished a batch of #
+                ++i_size;
+                remain = none;
+            } else {  // remain > 0
+                return;  // impossible, so terminate
+            }
+        } else {  // ch == '#'
+            if (remain == none) {
+                remain = sizes[i_size] - 1;
+            } else if (remain == 0) {
+                return;  // impossible
+            } else {  // remain > 0
+                --remain;
+            }
+        }
+    }
+    if (i_size == sizes.size()) {
+        for (int i = i_grid; i < grid.size(); ++i) {
+            if (grid[i] == '#') { return; }
+        }
+        ++total;
+    } else if (i_grid == grid.size()) {
+        if ( remain == 0 && i_size + 1 == sizes.size()) { ++total; }
+    } else {  // ch == '?' and haven't finished yet
+        // try ? = #
+        if (remain == none) {
+            const auto new_remain = sizes[i_size] - 1;
+            collect(total, grid, 1 + i_grid, sizes, i_size, new_remain);
+        } else if (remain > 0) {
+            collect(total, grid, 1 + i_grid, sizes, i_size, remain - 1);
+        }
+        // try ? = .
+        if (remain == 0) {
+            collect(total, grid, 1 + i_grid, sizes, 1 + i_size, none);
+        } else if (remain == none) {
+            collect(total, grid, 1 + i_grid, sizes, i_size, none);
+        }
+    }
 }
 
-auto split_nums(const std::string &list) {
-  std::size_t i = 0;
-  std::vector<int> nums;
-  while (true) {
-    const auto k = list.find(',', i);
-    if (k == list.npos) {
-      nums.push_back(std::stoi(list.substr(i)));
-      break;
-    } else {
-      nums.push_back(std::stoi(list.substr(i, k-i)));
-      i = k + 1;
-    }
-  }
-  return nums;
+long solve(const std::string &grid, const std::vector<int> &sizes) {
+    long total = 0;
+    collect(total, grid, 0, sizes, 0, none);
+    return total;
 }
 
 struct Problem {
-  std::string grid;
-  std::vector<int> nums;
+    std::string grid;
+    std::vector<int> nums;
 };
 
-auto read_problems(const char *filepath) {
-  std::vector<Problem> problems;
-  if (auto fs = std::ifstream(filepath)) {
-    std::string grid, nums;
-    while (fs >> grid) {
-      fs >> nums;
-      problems.push_back({grid, split_nums(nums)});
+auto split_nums(const std::string &list) {
+    std::size_t i = 0;
+    std::vector<int> nums;
+    while (true) {
+        const auto k = list.find(',', i);
+        if (k == list.npos) {
+            nums.push_back(std::stoi(list.substr(i)));
+            break;
+        } else {
+            nums.push_back(std::stoi(list.substr(i, k-i)));
+            i = k + 1;
+        }
     }
-  }
-  return problems;
+    return nums;
 }
 
-void apply_mask(std::vector<bool> &bits, int mask) {
-  for (int k = 0; k < bits.size(); ++k) {
-    bits[k] = 1 == (mask & 1);
-    mask >>= 1;
-  }
-}
-
-void apply_fix(
-    std::string &fixed, const std::string &grid,
-    const std::vector<int> &pos, const std::vector<bool> &bits) {
-  fixed = grid;
-  for (int i = 0; i < pos.size(); ++i) {
-    fixed[pos[i]] = bits[i] ? '#' : '.';
-  }
-}
-
-bool check_works(const std::string &fixed, const std::vector<int> nums) {
-  int pos = 0;
-  for (const auto n : nums) {
-    if (pos == fixed.size()) { return false; }
-    const int left = fixed.find('#', pos);
-    if (left == fixed.npos) { return false; }
-    int right = fixed.find('.', left + 1);
-    if (right == fixed.npos) { right = fixed.size(); }
-    if (right - left != n) { return false; }
-    pos = right;
-  }
-  while (pos < fixed.size()) {
-    if (fixed[pos] == '#') { return false; }
-    ++pos;
-  }
-  return true;
-}
-
-int solve(const Problem &problem) {
-  const auto qpos = question_positions(problem.grid);
-  std::vector<bool> bits(qpos.size());
-  std::string fixed(problem.grid);
-  const int power = 1 << qpos.size();
-  int count = 0;
-  for (int i = 0; i < power; ++i) {
-    apply_mask(bits, i);
-    apply_fix(fixed, problem.grid, qpos, bits);
-    if (check_works(fixed, problem.nums)) {
-      ++count;
+auto times_five_with_questions(const std::string &text) {
+    std::string out = text;
+    for (int i = 0; i < 4; ++i) {
+        out.push_back('?');
+        std::copy(text.cbegin(), text.cend(), std::back_inserter(out));
     }
-  }
-  return count;
+    return out;
+}
+
+auto times_five(const std::vector<int> &sizes) {
+    std::vector<int> out = sizes;
+    for (int i = 0; i < 4; ++i) {
+        std::copy(sizes.cbegin(), sizes.cend(), std::back_inserter(out));
+    }
+    return out;
+}
+
+void foo1() {
+    std::vector<Problem> problems;
+    if (auto fs = std::ifstream("/home/xdavidliu/Documents/temp/data.txt")) {
+        long part1 = 0, part2 = 0;
+        std::string grid, nums;
+        while (fs >> grid) {
+            fs >> nums;
+            const auto sizes = split_nums(nums);
+            part1 += solve(grid, sizes);
+            const auto five_grid = times_five_with_questions(grid);
+            const auto five_sizes = times_five(sizes);
+            std::cout << "working on " << grid << '\n';
+            part2 += solve(five_grid, five_sizes);
+        }
+        std::cout << "part 1 = " << part1 << '\n';
+        std::cout << "part 2 = " << part2 << '\n';
+    }
+}
+
+void foo2() {
+    const std::string grid = "?###????????";
+    const std::vector<int> sizes = {3, 2, 1};
+    std::cout << solve(times_five_with_questions(grid), times_five(sizes)) << '\n';
 }
 
 int main() {
-  const auto problems = read_problems("/tmp/data.txt");
-  int part1 = 0;
-  for (const auto &prob : problems) {
-    int s = solve(prob);
-    part1 += s;
-  }
-  std::cout << "part 1 = " << part1 << '\n';  // 7017
+    foo1();
 }
