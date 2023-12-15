@@ -39,11 +39,13 @@ void perform(const std::string ins, std::vector<std::vector<Lens>> &boxes) {
   auto &box = boxes[label_hsh];
   const auto matches = [&label] (const Lens &lens) { return lens.label == label; };
   if (ins.back() == '-') {
-    std::remove_if(box.begin(), box.end(), matches);
+    auto rem = std::remove_if(box.begin(), box.end(), matches);
+    box.erase(rem, box.end());
+    // ugh, erase remove idiom. Horrible.
+    // https://stackoverflow.com/a/347478
   } else {  // =
     const auto focal_str = ins.substr(1 + op_pos, ins.size() - 1 - op_pos);
     const auto focal = std::stoi(focal_str);
-
     auto found = std::find_if(box.begin(), box.end(), matches);
     if (found != box.end()) {
       found->length = focal;
@@ -54,7 +56,7 @@ void perform(const std::string ins, std::vector<std::vector<Lens>> &boxes) {
 }
 
 int main() {
-  if (auto fs = std::ifstream("/tmp/example.txt")) {
+  if (auto fs = std::ifstream("/tmp/data.txt")) {
     std::string line;
     std::getline(fs, line);
     const auto tokens = split_commas(line);
@@ -69,11 +71,9 @@ int main() {
     for (std::size_t i_box = 0; i_box < boxes.size(); ++i_box) {
       const auto &box = boxes[i_box];
       for (std::size_t i_lens = 0; i_lens < box.size(); ++i_lens) {
-        std::cout << box[i_lens].length << ' ';
         part2 += (1 + i_box) * (1 + i_lens) * box[i_lens].length;
       }
-      if (!box.empty()) { std::cout << " | " << i_box << '\n'; }
     }
-    std::cout << "part 2 = " << part2 << '\n';
+    std::cout << "part 2 = " << part2 << '\n';  // 252782
   }
 }
