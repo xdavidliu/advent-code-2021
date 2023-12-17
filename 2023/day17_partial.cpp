@@ -111,6 +111,9 @@ class Solver {
             heap.emplace(new_heat, pos);
         }
     }
+    bool is_at_end(const std::size_t row, const std::size_t col) {
+        return row + 1 == grid.size() && col + 1 == grid.front().size();
+    }
 public:
     explicit Solver(const char *filepath) : grid(read_grid(filepath)), best_non_heap_end(inf_heat) {}
     std::size_t solve() {
@@ -126,7 +129,7 @@ public:
             // last year in central park.
             if (heat > best_heat.at(pos)) { continue; }
             const auto [row, col, dir] = pos;
-            if (row + 1 == grid.size() && col + 1 == grid.front().size()) {
+            if (is_at_end(row, col)) {
                 return std::min(heat, best_non_heap_end);
             }
             // no need to add heat because heap.top() was inserted using add,
@@ -142,9 +145,7 @@ public:
                 if (row < 0 || col < 0 || row >= grid.size() || col >= grid.front().size()) { break; }
                 // need to manually add heat because forward-moves never added to heap
                 heat += grid_value(row, col);
-                if (row + 1 == grid.size() || col + 1 == grid.front().size()) {
-                    std::cout << heat << ' ' << i << '\n';
-                    return -1;
+                if (is_at_end(row, col)) {
                     best_non_heap_end = std::min(best_non_heap_end, heat);
                 }
                 add({heat, left_and_forward(pos)});
