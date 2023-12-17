@@ -117,6 +117,11 @@ class Solver {
 public:
     explicit Solver(const char *filepath) : grid(read_grid(filepath)), best_non_heap_end(inf_heat) {}
     std::size_t solve(const int min_move, const int max_move) {
+        best_heat.clear();
+        // no clear for priority queue, so do it manually
+        // https://stackoverflow.com/a/2852183/2990344
+        heap = decltype(heap)();
+        best_non_heap_end = inf_heat;
         // because heap pop loop below assumes one turn already made
         // 0 instead of grid_value(0, 0) because problems says first doesn't count
         add({0, {0, 1, Direction::Right}});
@@ -134,6 +139,7 @@ public:
             }
             // after a turn, there's already one move
             for (int moves = 1; moves <= max_move; ++moves) {
+                // heat is valid here because just turned, so pos is in heap
                 if (min_move <= moves) {
                     add({heat, left_and_forward(pos)});
                     add({heat, right_and_forward(pos)});
@@ -161,12 +167,12 @@ public:
 };
 
 int main() {
-    constexpr char filepath[] = "/home/xdavidliu/Documents/temp/example.txt";
+    constexpr char filepath[] = "/home/xdavidliu/Documents/temp/data.txt";
     Solver solver(filepath);
     const auto part1 = solver.solve(0, 3);
     std::cout << "part 1 = " << part1 << '\n';  // 785
     const auto part2 = solver.solve(4, 10);
-    std::cout << "part 2 = " << part2 << '\n';  // 785
+    std::cout << "part 2 = " << part2 << '\n';  // 922
 }
 
 /*
