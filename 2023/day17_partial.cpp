@@ -57,6 +57,16 @@ Position move_forward(const Position pos) {
     return {row, col, dir};
 }
 
+Position forward_and_left(const Position pos) {
+    auto [row, col, dir] = move_forward(pos);
+    return {row, col, rotate_left(dir)};
+}
+
+Position forward_and_right(const Position pos) {
+    auto [row, col, dir] = move_forward(pos);
+    return {row, col, rotate_right(dir)};
+}
+
 using Heat = std::size_t;
 constexpr auto inf_heat = std::numeric_limits<Heat>::max();
 
@@ -83,53 +93,61 @@ class Solver {
     std::priority_queue<Item, std::vector<Item>, std::greater<>> heap;
     std::map<Position, Heat> best_heat;
     Heat best_non_heap_end;
+    Heat grid_value(const std::size_t row, const std::size_t col) {
+        return grid[row][col] - '0';
+    }
     void add(const Item &item) {
         const auto [heat, pos] = item;
         const auto [row, col, dir] = pos;
         // assumes Position has signed indices
         if (row < 0 || col < 0 || row >= grid.size() || col >= grid.front().size()) { return; }
         auto found = best_heat.find(pos);
-        const auto new_heat = heat + (grid[row][col] - '0');
+        const auto new_heat = heat + grid_value(row, col);
         auto [iter, worked] = best_heat.insert({pos, new_heat});
         // if !worked, iter already points to value
         // https://en.cppreference.com/w/cpp/container/map/insert
         if (worked || new_heat < iter->second) {
             iter->second = new_heat;  // does nothing if !worked
-            heap.push(item);
+            heap.emplace(new_heat, pos);
         }
     }
 public:
     explicit Solver(const char *filepath) : grid(read_grid(filepath)), best_non_heap_end(inf_heat) {}
     std::size_t solve() {
-        // first spot doesn't count, so 0 heat
-        add({0, {0, 0, Direction::Right}});
-        add({0, {0, 0, Direction::Down}});
+        const auto first_heat = grid_value(0, 0);
+        // because heap pop loop below assumes one turn already made
+        add({first_heat, {0, 1, Direction::Right}});
+        add({first_heat, {1, 0, Direction::Down}});
         while (!heap.empty()) {
             auto [heat, pos] = heap.top();
             heap.pop();
             // check best, if best is lower heat, skip. Hmm, may be optimizable here
-            // since may be provable that's not possible. But his is suboptimality that I discussed
+            // since may be provable that's not possible. But this is suboptimality that I discussed
             // last year in central park.
             if (heat > best_heat.at(pos)) { continue; }
             const auto [row, col, dir] = pos;
             if (row + 1 == grid.size() && col + 1 == grid.front().size()) {
+                std::cout << heat << ' ' << best_non_heap_end << '\n';
                 return std::min(heat, best_non_heap_end);
             }
             // no need to add heat because heap.top() was inserted using add,
             // which already took care of heat
-            add({heat, {row, col, rotate_left(dir)}});
-            add({heat, {row, col, rotate_right(dir)}});
-            for (int i = 1; i <= 3; ++i) {
+            // cannot add without moving forward because then the next pop can rotate AGAIN
+            // same in two adds in for loop below, for total of four adds
+            add({heat, forward_and_left(pos)});
+            add({heat, forward_and_right(pos)});
+            // can only 2 because prev turn when heap item pushed counts as 1 already
+            for (int i = 0; i < 2; ++i) {
                 pos = move_forward(pos);
                 const auto [row, col, dir] = pos;
                 if (row < 0 || col < 0 || row >= grid.size() || col >= grid.front().size()) { break; }
                 // need to manually add heat because forward-moves never added to heap
-                heat += grid[row][col] - '0';
+                heat += grid_value(row, col);
                 if (row + 1 == grid.size() || col + 1 == grid.front().size()) {
                     best_non_heap_end = std::min(best_non_heap_end, heat);
                 }
-                add({heat, {row, col, rotate_left(dir)}});
-                add({heat, {row, col, rotate_right(dir)}});
+                add({heat, forward_and_left(pos)});
+                add({heat, forward_and_right(pos)});
             }
         }
         std::cout << "failed to reach end\n";
