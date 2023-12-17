@@ -116,7 +116,7 @@ class Solver {
     }
 public:
     explicit Solver(const char *filepath) : grid(read_grid(filepath)), best_non_heap_end(inf_heat) {}
-    std::size_t solve() {
+    std::size_t solve(const int min_move, const int max_move) {
         // because heap pop loop below assumes one turn already made
         // 0 instead of grid_value(0, 0) because problems says first doesn't count
         add({0, {0, 1, Direction::Right}});
@@ -132,27 +132,27 @@ public:
             if (is_at_end(row, col)) {
                 return std::min(heat, best_non_heap_end);
             }
-            // no need to add heat because heap.top() was inserted using add,
-            // which already took care of heat
-            // cannot add without moving forward because then the next pop can rotate AGAIN
-            // same in two adds in for loop below, for total of four adds
-            add({heat, left_and_forward(pos)});
-            add({heat, right_and_forward(pos)});
-            // can only 2 because prev turn when heap item pushed counts as 1 already
-            for (int i = 0; i < 2; ++i) {
+            // after a turn, there's already one move
+            for (int moves = 1; moves <= max_move; ++moves) {
+                if (min_move <= moves) {
+                    add({heat, left_and_forward(pos)});
+                    add({heat, right_and_forward(pos)});
+                }
+                // because don't want to check best_non_heap_end after 1 + max_move
+                if (moves == max_move) { break; }
                 pos = move_forward(pos);
                 const auto [row, col, dir] = pos;
                 if (row < 0 || col < 0 || row >= grid.size() || col >= grid.front().size()) { break; }
                 // need to manually add heat because forward-moves never added to heap
                 heat += grid_value(row, col);
-                if (is_at_end(row, col)) {
-                    best_non_heap_end = std::min(best_non_heap_end, heat);
-                }
-                add({heat, left_and_forward(pos)});
-                add({heat, right_and_forward(pos)});
                 // idea: best_heat djikstra map missing a lot of these intermediate
                 // ones. But that's okay because max of 3 means there's lots of turns,
                 // so okay to keep track of just the "just turned" ones
+                if (is_at_end(row, col)) {
+                    best_non_heap_end = std::min(best_non_heap_end, heat);
+                    break;
+                    // can't turn or move forward from end
+                }
             }
         }
         std::cout << "failed to reach end\n";
@@ -163,8 +163,10 @@ public:
 int main() {
     constexpr char filepath[] = "/home/xdavidliu/Documents/temp/example.txt";
     Solver solver(filepath);
-    const auto part1 = solver.solve();
+    const auto part1 = solver.solve(0, 3);
     std::cout << "part 1 = " << part1 << '\n';  // 785
+    const auto part2 = solver.solve(4, 10);
+    std::cout << "part 2 = " << part2 << '\n';  // 785
 }
 
 /*
