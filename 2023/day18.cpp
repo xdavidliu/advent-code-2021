@@ -14,20 +14,39 @@ std::size_t queue_limit = 123456;
 struct Dig {
     char dir;
     int steps;
-    std::string rgb;
 };
 
 using Position = std::pair<long, long>;
 
-std::vector<Dig> read_digs() {
+Dig dig_from(const std::string &rgb) {
+    // 2 because of (#
+    const auto steps = std::stoi(rgb.substr(2, 5), nullptr, 16);
+    const auto second_to_last = *(rgb.crbegin()+1);
+    switch (second_to_last) {
+        case '0':
+            return {'R', steps};
+        case '1':
+            return {'D', steps};
+        case '2':
+            return {'L', steps};
+        case '3':
+            return {'U', steps};
+    }
+    throw std::exception();
+}
+
+std::pair<std::vector<Dig>, std::vector<Dig>> read_digs() {
      if (auto fs = std::fstream(filepath)) {
-         std::vector<Dig> out;
-         Dig dig;
-         while (fs >> dig.dir) {
-             fs >> dig.steps >> dig.rgb;
-             out.push_back(dig);
+         std::vector<Dig> out1, out2;
+         int steps = 0;
+         char dir;
+         std::string rgb;
+         while (fs >> dir) {
+             fs >> steps >> rgb;
+             out1.push_back({dir, steps});
+             out2.push_back(dig_from(rgb));
          }
-         return out;
+         return {out1, out2};
      } else {
          throw std::exception();
      }
@@ -40,8 +59,8 @@ Position move_increment(const Position &pos, const char dir) {
         case 'D': return {row+1, col};
         case 'L': return {row, col-1};
         case 'R': return {row, col+1};
+        default: throw std::exception();
     }
-    throw std::exception();
 }
 
 // to minus from
@@ -83,7 +102,7 @@ auto visit_loop(const std::vector<Dig> &digs) {
     std::vector<Position> out;
     Position pos = {0, 0};
     out.push_back(pos);
-    for (const auto &[dir, steps, rgb] : digs) {
+    for (const auto &[dir, steps] : digs) {
         for (int i = 0; i < steps; ++i) {
             pos = move_increment(pos, dir);
             out.push_back(pos);
@@ -132,8 +151,11 @@ auto fill_interior(const std::vector<Position> &loop) {
 
 int main() {
     left_handed = left_handed;  // hack: hide compiler warnings about "always true"
-    const auto digs = read_digs();
-    const auto loop = visit_loop(digs);
-    const auto part1 = fill_interior(loop);
-    std::cout << "part 1 = " << part1 << '\n';
+    const auto [digs1, digs2] = read_digs();
+    const auto loop1 = visit_loop(digs1);
+    const auto part1 = fill_interior(loop1);
+    std::cout << "part 1 = " << part1 << '\n';  // 49897
+    for (const auto &[dir, steps] : digs2) {
+        std::cout << dir << ' ' << steps << '\n';
+    }
 }
