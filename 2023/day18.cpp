@@ -3,159 +3,111 @@
 #include <string>
 #include <fstream>
 #include <exception>
-#include <set>
-#include <string_view>
-#include <deque>
+#include <limits>
 
-constexpr char filepath[] = "/home/employee/Documents/temp/data.txt";
-bool left_handed = false;
-std::size_t queue_limit = 123456;
+constexpr char filepath[] = "/tmp/data.txt";
 
 struct Dig {
-    char dir;
-    int steps;
+  char dir;
+  long steps;
 };
 
 using Position = std::pair<long, long>;
 
-Dig dig_from(const std::string &rgb) {
-    // 2 because of (#
-    const auto steps = std::stoi(rgb.substr(2, 5), nullptr, 16);
-    const auto second_to_last = *(rgb.crbegin()+1);
-    switch (second_to_last) {
-        case '0':
-            return {'R', steps};
-        case '1':
-            return {'D', steps};
-        case '2':
-            return {'L', steps};
-        case '3':
-            return {'U', steps};
-    }
-    throw std::exception();
+Dig dig_from(const std::string& rgb) {
+  // 2 because of (#
+  const auto steps = std::stoi(rgb.substr(2, 5), nullptr, 16);
+  const auto second_to_last = *(rgb.crbegin() + 1);
+  switch (second_to_last) {
+    case '0':return {'R', steps};
+    case '1':return {'D', steps};
+    case '2':return {'L', steps};
+    case '3':return {'U', steps};
+  }
+  throw std::exception();
 }
 
 std::pair<std::vector<Dig>, std::vector<Dig>> read_digs() {
-     if (auto fs = std::fstream(filepath)) {
-         std::vector<Dig> out1, out2;
-         int steps = 0;
-         char dir;
-         std::string rgb;
-         while (fs >> dir) {
-             fs >> steps >> rgb;
-             out1.push_back({dir, steps});
-             out2.push_back(dig_from(rgb));
-         }
-         return {out1, out2};
-     } else {
-         throw std::exception();
-     }
-}
-
-Position move_increment(const Position &pos, const char dir) {
-    const auto [row, col] = pos;
-    switch (dir) {
-        case 'U': return {row-1, col};
-        case 'D': return {row+1, col};
-        case 'L': return {row, col-1};
-        case 'R': return {row, col+1};
-        default: throw std::exception();
+  if (auto fs = std::fstream(filepath)) {
+    std::vector<Dig> out1, out2;
+    long steps = 0;
+    char dir;
+    std::string rgb;
+    while (fs >> dir) {
+      fs >> steps >> rgb;
+      out1.push_back({dir, steps});
+      out2.push_back(dig_from(rgb));
     }
-}
-
-// to minus from
-char diff_dir(const Position &to, const Position &from) {
-    const auto [to_row, to_col] = to;
-    const auto [from_row, from_col] = from;
-    switch (to_row - from_row) {
-        case -1: return 'U';
-        case 1: return 'D';
-    }
-    switch (to_col - from_col) {
-        case -1: return 'L';
-        case 1: return 'R';
-    }
+    return {out1, out2};
+  } else {
     throw std::exception();
+  }
 }
 
-char dir_left(const char dir) {
-    switch (dir) {
-        case 'U': return 'L';
-        case 'D': return 'R';
-        case 'L': return 'D';
-        case 'R': return 'U';
-        default: throw std::exception();
-    }
+struct Edge {
+  long r0, c0, r1, c1;
+};
+
+Edge make_edge(const Position &pos, const Dig &dig) {
+  const auto [row, col] = pos;
+  const auto [dir, steps] = dig;
+  switch (dir) {
+    case 'U': return {row, col, row-steps, col};
+    case 'D': return {row, col, row+steps, col};
+    case 'L': return {row, col, row, col-steps};
+    case 'R': return {row, col, row, col+steps};
+  }
+  throw std::exception();
 }
 
-char dir_right(const char dir) {
-    switch (dir) {
-        case 'U': return 'R';
-        case 'D': return 'L';
-        case 'L': return 'U';
-        case 'R': return 'D';
-        default: throw std::exception();
-    }
+auto convert_to_edges(const std::vector<Dig> &digs) {
+  std::vector<Edge> out;
+  Position pos{0, 0};
+  for (const auto &dig : digs) {
+    const auto edge = make_edge(pos, dig);
+    pos = {edge.r1, edge.c1};
+    out.push_back(edge);
+  }
+  return out;
 }
 
-auto visit_loop(const std::vector<Dig> &digs) {
-    std::vector<Position> out;
-    Position pos = {0, 0};
-    out.push_back(pos);
-    for (const auto &[dir, steps] : digs) {
-        for (int i = 0; i < steps; ++i) {
-            pos = move_increment(pos, dir);
-            out.push_back(pos);
-        }
-    }
-    return out;
-}
-
-void add_to_bfs(std::set<Position> &seen, std::deque<Position> &que, const Position &pos) {
-    if (seen.count(pos)) { return; }
-    seen.insert(pos);
-    que.push_back(pos);
-    if (seen.size() > queue_limit) {
-        // endl to guarantee flush cout
-        std::cout << "bfs queue too big; invert left_handed" << std::endl;
-        throw std::exception();
-    }
-}
-
-void bfs(std::set<Position> &seen, const Position &start) {
-    if (seen.count(start)) { return; }
-    seen.insert(start);
-    std::deque<Position> que;
-    que.push_back(start);
-    while (!que.empty()) {
-        const auto pos = que.front();
-        que.pop_front();
-        for (const auto dir : std::string_view("UDLR")) {
-            add_to_bfs(seen, que, move_increment(pos, dir));
-        }
-    }
-}
-
-// note BFS with handed-ness similar to earlier problem this year
-auto fill_interior(const std::vector<Position> &loop) {
-    std::set<Position> seen(loop.cbegin(), loop.cend());
-    for (auto iter = loop.cbegin(); iter+1 != loop.cend(); ++iter) {
-        const auto dir = diff_dir(*(iter+1), *iter);
-        const auto in_dir = left_handed ? dir_left(dir) : dir_right(dir);
-        // similar to other problem this year, need two bfs not one here
-        bfs(seen, move_increment(*iter, in_dir));
-        bfs(seen, move_increment(*(iter+1), in_dir));
-    }
-    return seen.size();
+void solve(const std::vector<Edge> &edges) {
+  constexpr auto inf = std::numeric_limits<long>::max();
+  constexpr auto neg_inf = std::numeric_limits<long>::min();
+  // must be opposite because will use min and max
+  long far_left = inf, far_right = neg_inf, far_up = inf, far_down = neg_inf;
+  for (const auto &[r0, c0, r1, c1] : edges) {
+    far_left = std::min(far_left, std::min(c0, c1));
+    far_up = std::min(far_up, std::min(r0, r1));
+    far_right = std::max(far_right, std::max(c0, c1));
+    far_down = std::max(far_down, std::max(r0, r1));
+  }
+  std::cout << far_left << " left\n";
+  std::cout << far_right << " right\n";
+  std::cout << far_up << " up\n";
+  std::cout << far_down << " down\n";
 }
 
 int main() {
-    left_handed = left_handed;  // hack: hide compiler warnings about "always true"
-    const auto [digs1, digs2] = read_digs();
-    const auto loop1 = visit_loop(digs1);
-    const auto part1 = fill_interior(loop1);
-    std::cout << "part 1 = " << part1 << '\n';  // 49897
-    for (const auto &[dir, steps] : digs2) {
-        std::cout << dir << ' ' << steps << '\n';
-    }
+  const auto [digs1, digs2] = read_digs();
+  const auto edges1 = convert_to_edges(digs1);
+  const auto edges2 = convert_to_edges(digs2);
+  std::cout << "row = [";
+  for (const auto &e : edges2) {
+    std::cout << e.r0 << ',' << e.r1 << ',';
+  }
+  std::cout << "];\n";
+  std::cout << "col = [";
+  for (const auto &e : edges2) {
+    std::cout << e.c0 << ',' << e.c1 << ',';
+  }
+  std::cout << "];\n";
+  solve(edges1);
+  // part 1 = 49897
+
+  // find lowest and highest of row and col
+  // find first and last time it's at each of them
+  // integrate around
+  // do example and data for part 1, confirm
+
 }
