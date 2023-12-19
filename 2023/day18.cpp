@@ -6,6 +6,7 @@
 #include <algorithm>
 #include <string_view>
 #include <queue>
+#include <map>
 #include <set>
 
 constexpr char filepath[] = "/home/employee/Documents/temp/example.txt";
@@ -57,6 +58,10 @@ std::pair<std::vector<Dig>, std::vector<Dig>> read_digs() {
 // i.e. in a grid
 using Vertical = std::tuple<long, long, long, bool>;
 
+// left, right
+// row will be stored as key in map
+using Horizontal = std::pair<long, long>;
+
 auto get_x(const Vertical &vert) {
     return std::get<0>(vert);
 }
@@ -84,17 +89,23 @@ public:
     }
 };
 
-auto verticals_by_top(const std::vector<Dig> &digs) {
+auto make_edges(const std::vector<Dig> &digs) {
     std::vector<Vertical> out;
+    std::map<long, std::vector<Horizontal>> out_horiz;
     long x = 0, row = 0;
     for (const auto &dig : digs) {
+        const auto old_x = x;
         switch (dig.dir) {
             case 'L': {
                 x -= dig.steps;
+                auto [iter, worked] = out_horiz.insert({row, std::vector<Horizontal>()});
+                iter->second.emplace_back(x, old_x);  // x < old_x
                 break;
             }
             case 'R': {
                 x += dig.steps;
+                auto [iter, worked] = out_horiz.insert({row, std::vector<Horizontal>()});
+                iter->second.emplace_back(old_x, x);  // x > old_x
                 break;
             }
             case 'U': {
@@ -111,7 +122,7 @@ auto verticals_by_top(const std::vector<Dig> &digs) {
         }
     }
     std::sort(out.begin(), out.end(), less_top);
-    return out;
+    return std::make_pair(out, out_horiz);
 }
 
 auto recompute_cross_section(const std::set<Vertical> &heap_set) {
@@ -132,16 +143,50 @@ auto recompute_cross_section(const std::set<Vertical> &heap_set) {
     return cross_section;
 }
 
-auto compute_intersecting_cross_section(const std::set<Vertical> &heap_set, const long row) {
+// intersecting of begin and ending verts
+auto compute_intersecting_cross_section(const std::set<Vertical> &heap_set, const long row, const bool is_clockwise, const std::vector<Horizontal> &horiz) {
+    // if clockwise, every up vertical til next vertical has empty space that needs to be shaded
     long cross_section = 0;
+    for (const auto &[a, b] : horiz) {
+        cross_section += std::abs(a - b);
+    }
+    std::cout << horiz.size() << " elements in horiz for row = " << row << '\n';
+    long prev_x = 0;
+    bool entered = false;
+    for (const auto &vert : heap_set) {
+        const auto this_x = get_x(vert);
+        if (!entered) {
+            const bool enters_clockwise = is_clockwise && is_up(vert) && get_top(vert) != row;
+            // if get_top were row, then it would move right, thus there would already be
+            // a horizontal for it
+            const bool enters_counter_clockwise = !is_clockwise && !is_up(vert) && get_bottom(vert) != row;
+            // enters non-horiz region
+            entered = enters_clockwise || enters_counter_clockwise;
+        } else {
+            cross_section += this_x - prev_x - 1;
+            entered = false;
+        }
+        prev_x = this_x;
+    }
     return cross_section;
 }
 
-long solve(const std::vector<Vertical> &verts) {
+bool compute_if_clockwise(const std::vector<Vertical> &verts) {
+    auto left_vert = verts.front();
+    for (const auto &vert : verts) {
+        if (get_x(vert) < get_x(left_vert)) {
+            left_vert = vert;
+        }
+    }
+    return is_up(left_vert);
+}
+
+long solve(const std::vector<Vertical> &verts, const std::map<long, std::vector<Horizontal>> &horiz) {
     // min_heap, peek has smallest bottom
     std::priority_queue<Vertical, std::vector<Vertical>, GreaterBottom> heap;
     // keep matched so can quickly iterate through by x
     std::set<Vertical> heap_set;
+    const bool is_clockwise = compute_if_clockwise(verts);
     auto iter = verts.cbegin();
     // top has only starting
     auto last_row = get_top(*iter);  // last as in prev, not final
@@ -165,7 +210,9 @@ long solve(const std::vector<Vertical> &verts) {
             heap.push(*iter);
             ++iter;
         }
-        area += compute_intersecting_cross_section(heap_set, next);
+        const auto intersect = compute_intersecting_cross_section(heap_set, next, is_clockwise, horiz.at(next));
+        std::cout << intersect << " intersect at " << next << '\n';
+        area += intersect;
         // no need to check if heap empty; cannot empty until while loop terminates
         while (next == get_bottom(heap.top())) {
             heap_set.erase(heap.top());
@@ -182,9 +229,9 @@ long solve(const std::vector<Vertical> &verts) {
 
 int main() {
     const auto [digs1, digs2] = read_digs();
-    const auto verts1 = verticals_by_top(digs1);
-    const auto verts2 = verticals_by_top(digs2);
-    const auto part1 = solve(verts1);
+    const auto [verts1, horiz1] = make_edges(digs1);
+    const auto [verts2, horiz2] = make_edges(digs2);
+    const auto part1 = solve(verts1, horiz1);
     std::cout << "part 1 = " << part1 << '\n';  // 49897
 //    std::cout << "part 2 = " << solve(verts2) << '\n';
 }
