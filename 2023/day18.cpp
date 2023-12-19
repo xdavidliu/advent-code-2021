@@ -122,6 +122,9 @@ auto make_edges(const std::vector<Dig> &digs) {
         }
     }
     std::sort(out.begin(), out.end(), less_top);
+    for (auto &[key, value] : out_horiz) {
+        std::sort(value.begin(), value.end());
+    }
     return std::make_pair(out, out_horiz);
 }
 
@@ -145,28 +148,42 @@ auto recompute_cross_section(const std::set<Vertical> &heap_set) {
 
 // intersecting of begin and ending verts
 auto compute_intersecting_cross_section(const std::set<Vertical> &heap_set, const long row, const bool is_clockwise, const std::vector<Horizontal> &horiz) {
-    // if clockwise, every up vertical til next vertical has empty space that needs to be shaded
     long cross_section = 0;
-    for (const auto &[a, b] : horiz) {
-        cross_section += std::abs(a - b);
-    }
-    std::cout << horiz.size() << " elements in horiz for row = " << row << '\n';
-    long prev_x = 0;
-    bool entered = false;
-    for (const auto &vert : heap_set) {
-        const auto this_x = get_x(vert);
-        if (!entered) {
-            const bool enters_clockwise = is_clockwise && is_up(vert) && get_top(vert) != row;
-            // if get_top were row, then it would move right, thus there would already be
-            // a horizontal for it
-            const bool enters_counter_clockwise = !is_clockwise && !is_up(vert) && get_bottom(vert) != row;
-            // enters non-horiz region
-            entered = enters_clockwise || enters_counter_clockwise;
+    auto next_h = horiz.cbegin();
+    auto cur_v = heap_set.cbegin();
+    while (cur_v != heap_set.cend()) {
+        const auto cur_x = get_x(*cur_v);
+        if (next_h != horiz.cend() && cur_x == next_h->first) {
+            cross_section += next_h->second - next_h->first + 1;
+            ++next_h;
+            ++cur_v;
         } else {
-            cross_section += this_x - prev_x - 1;
-            entered = false;
+            const auto cur_top = get_top(*cur_v);
+            const auto cur_bottom = get_bottom(*cur_v);
+            if (cur_top != row && cur_bottom != row) { ++cross_section; }
+            if (is_up(*cur_v)) {
+                auto next_v = cur_v;
+                ++next_v;
+                if (next_v != heap_set.cend()) {
+                    cross_section += get_x(*next_v) - cur_x - 1;
+                }
+            }
+            ++cur_v;
         }
-        prev_x = this_x;
+    }
+    while (next_h != horiz.cend()) {
+        if (get_x(*cur_v) == next_h->first) {
+            cross_section += next_h->second - next_h->first + 1;
+            ++next_h;
+        } else {
+            my_assert(get_x(*cur_v) < next_h->first, " intersect");
+            auto next_v = cur_v;
+            ++next_v;
+            if (is_up(*cur_v)) {
+                cross_section += get_x(*next_v) - get_x(*cur_v) - 1;
+            }
+        }
+        ++cur_v;
     }
     return cross_section;
 }
