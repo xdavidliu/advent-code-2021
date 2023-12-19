@@ -82,7 +82,7 @@ std::string perform_all(const std::vector<long> &values, const std::map<std::str
 }
 
 void foo4() {
-    constexpr char filepath[] = "/tmp/data.txt";
+    constexpr char filepath[] = "/tmp/example.txt";
     if (auto fs = std::ifstream(filepath)) {
         std::map<std::string, std::vector<std::string>> ins_map;
         std::string word;
@@ -103,6 +103,119 @@ void foo4() {
     }
 }
 
+void explore(const std::map<std::string, std::vector<std::string>> &ins_map) {
+    std::string cur = "in";
+    /*
+     * have range of values
+     * explore map and constantly narrow down
+     * if R, terminate
+     * then collect all of them together and merge result; dedupe
+     * given ranges starting 1 - 4000 in all, start with in. Bifurcate
+     * on first one, with > and <=, then for >, go to second one and bifurcate
+     * there too. Do this recursively. Should have index too in the recursion,
+     * and also pass in an array to append accepted ranges.
+     */
+}
+
+using Range = std::pair<int, int>;
+using FourRange = std::tuple<Range, Range, Range, Range>;
+
+// update single range should take MUTABLE reference
+void update_single_range(const std::string &comparison, Range &range) {
+    const auto rhs = std::stoi(comparison.substr(2));
+    if (comparison[1] == '<') {
+        range.second = std::min(range.second, rhs - 1);
+    } else {  // >
+        range.first = std::max(range.first, rhs + 1);
+    }
+}
+
+// pass by mutable copy so can return
+FourRange update_ranges(const std::string &comparison, FourRange ranges) {
+    switch (comparison[0]) {
+        case 'x': {
+            update_single_range(comparison, std::get<0>(ranges));
+            break;
+        }
+        case 'm': {
+            update_single_range(comparison, std::get<1>(ranges));
+            break;
+        }
+        case 'a': {
+            update_single_range(comparison, std::get<2>(ranges));
+            break;
+        }
+        case 's': {
+            update_single_range(comparison, std::get<3>(ranges));
+            break;
+        }
+        default: {
+            std::cout << comparison << " update range\n";
+            throw std::exception();
+        }
+    }
+    return ranges;
+}
+
+void recurse(
+        const std::map<std::string, std::vector<std::string>> &ins_map,
+        const std::string &cur,
+        const std::size_t ind,
+        const FourRange ranges,
+        std::vector<FourRange> &accepted)
+{
+    const auto &ins_list = ins_map.at(cur);
+    const auto &ins = ins_list.at(ind);
+    if (ins == "R") {
+        return;
+    } else if (ins == "A") {
+        accepted.push_back(ranges);
+        // todo: maybe do some merging to dedupe and avoid blowup
+    } else {  // instruction, has colon
+        const auto colon = ins.find(':');
+        if (colon == std::string::npos) {
+            // neither R, A, nor comparison, hence is a register name
+            recurse(ins_map, ins, 0, ranges, accepted);
+            return;
+        }
+        // a<2006:qkq
+        const auto new_ranges = update_ranges(ins.substr(0, colon), ranges);
+        const auto next = ins.substr(colon + 1);
+        if (next == "A") {
+            accepted.push_back(new_ranges);
+            // don't return, because need to recurse ind+1
+        } else if (next != "R") {
+            recurse(ins_map, next, 0, new_ranges, accepted);
+        }
+        if (ind+1 < ins_list.size()) {
+            recurse(ins_map, cur, ind+1, ranges, accepted);
+        }
+    }
+}
+
+void foo5() {
+    constexpr char filepath[] = "/tmp/example.txt";
+    if (auto fs = std::ifstream(filepath)) {
+        std::map<std::string, std::vector<std::string>> ins_map;
+        std::string word;
+        while ((fs >> word) && word.front() != '{') {
+            add_to_map(word, ins_map);
+        }
+        FourRange ranges{{1, 4000}, {1, 4000}, {1, 4000}, {1, 4000}};
+        std::vector<FourRange> accepted;
+        recurse(ins_map, "in", 0, ranges, accepted);
+        for (const auto &[x, m, a, s] : accepted) {
+            std::cout << "x in " << x.first << '-' << x.second << ", ";
+            std::cout << "m in " << m.first << '-' << m.second << ", ";
+            std::cout << "a in " << a.first << '-' << a.second << ", ";
+            std::cout << "s in " << s.first << '-' << s.second << "\n";
+        }
+        std::cout << accepted.size() << '\n';
+    } else {
+        my_assert(false, "wrong filepath");
+    }
+}
+
 int main() {
-    foo4();
+    foo5();
 }
