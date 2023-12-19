@@ -4,6 +4,7 @@
 #include <fstream>
 #include <exception>
 #include <algorithm>
+#include <string_view>
 #include <queue>
 #include <set>
 
@@ -13,6 +14,13 @@ struct Dig {
     char dir;
     long steps;
 };
+
+void my_assert(const bool cond, const std::string_view msg) {
+    if (!cond) {
+        std::cout << msg << '\n';
+        throw std::exception();
+    }
+}
 
 Dig dig_from(const std::string& rgb) {
     // 2 because of (#
@@ -65,7 +73,6 @@ auto is_up(const Vertical &vert) {
     return std::get<3>(vert);
 }
 
-
 bool less_top(const Vertical &a, const Vertical &b) {
     return get_top(a) < get_top(b);
 }
@@ -107,72 +114,77 @@ auto verticals_by_top(const std::vector<Dig> &digs) {
     return out;
 }
 
-#include <limits>
+auto recompute_cross_section(const std::set<Vertical> &heap_set) {
+    long cross_section = 0;
+    // expect heap size to be even now
+    // expect from left to right all unique x
+    // expect turn on off on off in that order, don't even care about clockwise
+    bool entering = true;
+    long last_x = 0; // unused on first iteration
+    for (const auto &vert : heap_set) {
+        const auto this_x = get_x(vert);
+        if (!entering) {
+            cross_section += this_x - last_x + 1;
+        }
+        entering = !entering;
+        last_x = this_x;
+    }
+    return cross_section;
+}
+
+auto compute_intersecting_cross_section(const std::set<Vertical> &heap_set, const long row) {
+    long cross_section = 0;
+    return cross_section;
+}
 
 long solve(const std::vector<Vertical> &verts) {
-    long area = 0;
-    // verts sorted by x, so this def of clockwise is correct.
-    const auto clockwise = is_up(verts.front());
-    // if clockwise, all up verts have area to right, and all down have
-    // area to left
     // min_heap, peek has smallest bottom
     std::priority_queue<Vertical, std::vector<Vertical>, GreaterBottom> heap;
     // keep matched so can quickly iterate through by x
     std::set<Vertical> heap_set;
     auto iter = verts.cbegin();
-    constexpr auto inf = std::numeric_limits<long>::max();
-    long cross_section = 0, last_row = std::numeric_limits<long>::min();
-    while (!heap.empty() || iter != verts.cend()) {
-        const auto heap_next = heap.empty() ? inf : get_bottom(heap.top());
-        const auto iter_next = iter == verts.cend() ? inf : get_top(*iter);
-        const auto next = std::min(heap_next, iter_next);
-        area += cross_section * (next - last_row + 1);
-        last_row = next;
-        if (next == heap_next) {
-            while (!heap.empty() && next == get_bottom(heap.top())) {
-                heap_set.erase(heap.top());
-                heap.pop();
-            }
-            // exiting verticals don't participate in next cross-section
-        }
-        // not else-if, since both can be true
-        if (next == iter_next) {
-            while (iter != verts.cend() && next == get_top(*iter)) {
-                heap_set.insert(*iter);
-                heap.push(*iter);
-                ++iter;
-            }
-        }
-        // expect heap size to be even now
-        // expect from left to right all unique x
-        // expect turn on off on off in that order, don't even care about clockwise
-        bool entering = true;
-        cross_section = 0;
-        long last_x = 0; // unused on first iteration
-        for (const auto &vert : heap_set) {
-            const auto this_x = get_x(vert);
-            if (!entering) {
-                cross_section += this_x - last_x + 1;
-            }
-            entering = !entering;
-            last_x = this_x;
-        }
-        // now use heap_set to re-calculate cross-section
-        /* actually, verts about to be removed or about to be added
-         * do NOT contribute to cross section!
-         * multiply last cross-section by distance since last row
-         * account for boundary effects w/ +1, -1, etc
-         * very first iteration establishes cross-section; or just hack
-         *   to have cross section 0 before first iter
-         */
+    // top has only starting
+    auto last_row = get_top(*iter);  // last as in prev, not final
+    while (last_row == get_top(*iter)) {
+        heap_set.insert(*iter);
+        heap.push(*iter);
+        ++iter;
     }
-    return area;
+    auto cross_section = recompute_cross_section(heap_set);
+    long area = cross_section;  // first row trivially included
+    while (iter != verts.cend()) {
+        my_assert(!heap.empty(), "heap empty");
+        // every beginning of vert in iter has an end of a vert in heap
+        const auto next = get_top(*iter);
+        area += cross_section * (next - last_row - 1);
+        last_row = next;
+        // put new ones in heap first so we can calculate cross section of just
+        // this row
+        while (iter != verts.cend() && next == get_top(*iter)) {
+            heap_set.insert(*iter);
+            heap.push(*iter);
+            ++iter;
+        }
+        area += compute_intersecting_cross_section(heap_set, next);
+        // no need to check if heap empty; cannot empty until while loop terminates
+        while (next == get_bottom(heap.top())) {
+            heap_set.erase(heap.top());
+            heap.pop();
+        }
+        // exiting verticals don't participate in next cross-section
+        cross_section = recompute_cross_section(heap_set);
+    }
+    // bottom row still contained
+    cross_section = recompute_cross_section(heap_set);
+    const auto next = get_bottom(heap.top());
+    return area + cross_section * (next - last_row);
 }
 
 int main() {
     const auto [digs1, digs2] = read_digs();
     const auto verts1 = verticals_by_top(digs1);
     const auto verts2 = verticals_by_top(digs2);
-    std::cout << "part 1 = " << solve(verts1) << '\n';  // 49897
-    std::cout << "part 2 = " << solve(verts2) << '\n';
+    const auto part1 = solve(verts1);
+    std::cout << "part 1 = " << part1 << '\n';  // 49897
+//    std::cout << "part 2 = " << solve(verts2) << '\n';
 }
