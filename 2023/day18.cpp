@@ -11,11 +11,14 @@
 
 // todo two ideas
 // one: can still try integration; just do only top and bottom. for loops
-// just shade and unshade
+// just shade and unshade. may even be simpler than the scanline heap approach
+// below.
+//
 // heap bug below means there may be vert events only involving ends, not
 // starts. Need to pop those too, not just look for starts
+// UPDATE: This was the missing piece! Nice!
 
-constexpr char filepath[] = "/home/employee/Documents/temp/data.txt";
+constexpr char filepath[] = "/tmp/data.txt";
 
 struct Dig {
     char dir;
@@ -152,8 +155,8 @@ auto recompute_cross_section(const std::set<Vertical> &heap_set) {
     return cross_section;
 }
 
-// intersecting of begin and ending verts
-auto compute_intersecting_cross_section(const std::set<Vertical> &heap_set, const long row, const bool is_clockwise, const std::vector<Horizontal> &horiz) {
+// row with transition of verts
+auto compute_transition_cross_section(const std::set<Vertical> &heap_set, const long row, const bool is_clockwise, const std::vector<Horizontal> &horiz) {
     long cross_section = 0;
     auto next_h = horiz.cbegin();
     auto cur_v = heap_set.cbegin();
@@ -226,7 +229,11 @@ long solve(const std::vector<Vertical> &verts, const std::map<long, std::vector<
     while (iter != verts.cend()) {
         my_assert(!heap.empty(), "heap empty");
         // every beginning of vert in iter has an end of a vert in heap
-        const auto next = get_top(*iter);
+        // WOW, this was the last piece of puzzle. I had get_top(*iter) here;
+        // once I changed to std::min, part 1 for data worked perfectly.
+        // rationale: a transition may happen only with verts exiting heap
+        // but NOT entering from iter.
+        const auto next = std::min(get_top(*iter), get_bottom(heap.top()));
         area += cross_section * (next - last_row - 1);
         // put new ones in heap first so we can calculate cross section of just
         // this row
@@ -237,9 +244,8 @@ long solve(const std::vector<Vertical> &verts, const std::map<long, std::vector<
             ++push_count;
         }
         // idea: separate into finishing, entering, and starting
-        const auto intersect = compute_intersecting_cross_section(heap_set, next, is_clockwise, horiz.at(next));
-        // std::cout << intersect << " intersect at " << next << '\n';
-        area += intersect;
+        const auto transition = compute_transition_cross_section(heap_set, next, is_clockwise, horiz.at(next));
+        area += transition;
         // no need to check if heap empty; cannot empty until while loop terminates
         while (next == get_bottom(heap.top())) {
             heap_set.erase(heap.top());
@@ -249,17 +255,10 @@ long solve(const std::vector<Vertical> &verts, const std::map<long, std::vector<
         cross_section = recompute_cross_section(heap_set);
         last_row = next;
     }
-    std::cout << push_count << " = push_count, " << heap.size() << " = heap size\n";
-    // todo todo todo !!!! heap at end may have multiple bottoms
-    // wait why is final last_row +51, but tops and bottoms -300 ish.
-    // violate invariant???
-    // bottom row still contained
     my_assert(!heap.empty() && !heap_set.empty(), "heap not empty at end");
     cross_section = recompute_cross_section(heap_set);
     const auto next = get_bottom(heap.top());
     const auto foo = get_top(heap.top());
-    // todo next is negative for data part 1
-    std::cout << foo << ' ' << next << ' ' << last_row << '\n';
     return area + cross_section * (next - last_row);  // todo
 }
 
@@ -269,5 +268,6 @@ int main() {
     const auto [verts2, horiz2] = make_edges(digs2);
     const auto part1 = solve(verts1, horiz1);
     std::cout << "part 1 = " << part1 << '\n';  // 49897
-//    std::cout << "part 2 = " << solve(verts2) << '\n';
+    const auto part2 = solve(verts2, horiz2);
+    std::cout << "part 2 = " << part2 << '\n';  // 194033958221830
 }
