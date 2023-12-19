@@ -138,7 +138,7 @@ auto recompute_cross_section(const std::set<Vertical> &heap_set) {
     for (const auto &vert : heap_set) {
         const auto this_x = get_x(vert);
         if (!entering) {
-            cross_section += this_x - last_x + 1;
+            cross_section += std::abs(this_x - last_x + 1);
         }
         entering = !entering;
         last_x = this_x;
@@ -165,7 +165,7 @@ auto compute_intersecting_cross_section(const std::set<Vertical> &heap_set, cons
                 auto next_v = cur_v;
                 ++next_v;
                 if (next_v != heap_set.cend()) {
-                    cross_section += get_x(*next_v) - cur_x - 1;
+                    cross_section += std::abs(get_x(*next_v) - cur_x - 1);
                 }
             }
             ++cur_v;
@@ -173,14 +173,14 @@ auto compute_intersecting_cross_section(const std::set<Vertical> &heap_set, cons
     }
     while (next_h != horiz.cend()) {
         if (get_x(*cur_v) == next_h->first) {
-            cross_section += next_h->second - next_h->first + 1;
+            cross_section += std::abs(next_h->second - next_h->first + 1);
             ++next_h;
         } else {
             my_assert(get_x(*cur_v) < next_h->first, " intersect");
             auto next_v = cur_v;
             ++next_v;
             if (is_up(*cur_v)) {
-                cross_section += get_x(*next_v) - get_x(*cur_v) - 1;
+                cross_section += std::abs(get_x(*next_v) - get_x(*cur_v) - 1);
             }
         }
         ++cur_v;
@@ -218,7 +218,8 @@ long solve(const std::vector<Vertical> &verts, const std::map<long, std::vector<
         my_assert(!heap.empty(), "heap empty");
         // every beginning of vert in iter has an end of a vert in heap
         const auto next = get_top(*iter);
-        area += cross_section * (next - last_row - 1);
+        area += cross_section * std::abs(next - last_row - 1);
+//        std::cout << " at " << next << " area now " << area << '\n';
         last_row = next;
         // put new ones in heap first so we can calculate cross section of just
         // this row
@@ -228,7 +229,7 @@ long solve(const std::vector<Vertical> &verts, const std::map<long, std::vector<
             ++iter;
         }
         const auto intersect = compute_intersecting_cross_section(heap_set, next, is_clockwise, horiz.at(next));
-        std::cout << intersect << " intersect at " << next << '\n';
+        // std::cout << intersect << " intersect at " << next << '\n';
         area += intersect;
         // no need to check if heap empty; cannot empty until while loop terminates
         while (next == get_bottom(heap.top())) {
@@ -241,7 +242,7 @@ long solve(const std::vector<Vertical> &verts, const std::map<long, std::vector<
     // bottom row still contained
     cross_section = recompute_cross_section(heap_set);
     const auto next = get_bottom(heap.top());
-    return area + cross_section * (next - last_row);
+    return area + cross_section * std::abs(next - last_row);
 }
 
 int main() {
