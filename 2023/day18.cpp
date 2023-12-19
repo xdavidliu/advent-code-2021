@@ -156,6 +156,8 @@ auto recompute_cross_section(const std::set<Vertical> &heap_set) {
 }
 
 // row with transition of verts
+// (it's quite remarkable that this is correct; was implemented at midnight having woken up
+// 3:50 am that day, last meal at noonish.
 auto compute_transition_cross_section(const std::set<Vertical> &heap_set, const long row, const bool is_clockwise, const std::vector<Horizontal> &horiz) {
     long cross_section = 0;
     auto next_h = horiz.cbegin();
