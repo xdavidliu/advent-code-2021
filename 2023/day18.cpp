@@ -9,7 +9,13 @@
 #include <map>
 #include <set>
 
-constexpr char filepath[] = "/home/employee/Documents/temp/example.txt";
+// todo two ideas
+// one: can still try integration; just do only top and bottom. for loops
+// just shade and unshade
+// heap bug below means there may be vert events only involving ends, not
+// starts. Need to pop those too, not just look for starts
+
+constexpr char filepath[] = "/home/employee/Documents/temp/data.txt";
 
 struct Dig {
     char dir;
@@ -138,7 +144,7 @@ auto recompute_cross_section(const std::set<Vertical> &heap_set) {
     for (const auto &vert : heap_set) {
         const auto this_x = get_x(vert);
         if (!entering) {
-            cross_section += std::abs(this_x - last_x + 1);
+            cross_section += this_x - last_x + 1;
         }
         entering = !entering;
         last_x = this_x;
@@ -152,6 +158,7 @@ auto compute_intersecting_cross_section(const std::set<Vertical> &heap_set, cons
     auto next_h = horiz.cbegin();
     auto cur_v = heap_set.cbegin();
     while (cur_v != heap_set.cend()) {
+        // todo: assert each vertical includes row
         const auto cur_x = get_x(*cur_v);
         if (next_h != horiz.cend() && cur_x == next_h->first) {
             cross_section += next_h->second - next_h->first + 1;
@@ -165,7 +172,7 @@ auto compute_intersecting_cross_section(const std::set<Vertical> &heap_set, cons
                 auto next_v = cur_v;
                 ++next_v;
                 if (next_v != heap_set.cend()) {
-                    cross_section += std::abs(get_x(*next_v) - cur_x - 1);
+                    cross_section += get_x(*next_v) - cur_x - 1;  // todo?
                 }
             }
             ++cur_v;
@@ -173,14 +180,14 @@ auto compute_intersecting_cross_section(const std::set<Vertical> &heap_set, cons
     }
     while (next_h != horiz.cend()) {
         if (get_x(*cur_v) == next_h->first) {
-            cross_section += std::abs(next_h->second - next_h->first + 1);
+            cross_section += next_h->second - next_h->first + 1;
             ++next_h;
         } else {
             my_assert(get_x(*cur_v) < next_h->first, " intersect");
             auto next_v = cur_v;
             ++next_v;
             if (is_up(*cur_v)) {
-                cross_section += std::abs(get_x(*next_v) - get_x(*cur_v) - 1);
+                cross_section += get_x(*next_v) - get_x(*cur_v) - 1;
             }
         }
         ++cur_v;
@@ -207,10 +214,12 @@ long solve(const std::vector<Vertical> &verts, const std::map<long, std::vector<
     auto iter = verts.cbegin();
     // top has only starting
     auto last_row = get_top(*iter);  // last as in prev, not final
+    int push_count = 0;
     while (last_row == get_top(*iter)) {
         heap_set.insert(*iter);
         heap.push(*iter);
         ++iter;
+        ++push_count;
     }
     auto cross_section = recompute_cross_section(heap_set);
     long area = cross_section;  // first row trivially included
@@ -218,16 +227,16 @@ long solve(const std::vector<Vertical> &verts, const std::map<long, std::vector<
         my_assert(!heap.empty(), "heap empty");
         // every beginning of vert in iter has an end of a vert in heap
         const auto next = get_top(*iter);
-        area += cross_section * std::abs(next - last_row - 1);
-//        std::cout << " at " << next << " area now " << area << '\n';
-        last_row = next;
+        area += cross_section * (next - last_row - 1);
         // put new ones in heap first so we can calculate cross section of just
         // this row
         while (iter != verts.cend() && next == get_top(*iter)) {
             heap_set.insert(*iter);
             heap.push(*iter);
             ++iter;
+            ++push_count;
         }
+        // idea: separate into finishing, entering, and starting
         const auto intersect = compute_intersecting_cross_section(heap_set, next, is_clockwise, horiz.at(next));
         // std::cout << intersect << " intersect at " << next << '\n';
         area += intersect;
@@ -238,11 +247,20 @@ long solve(const std::vector<Vertical> &verts, const std::map<long, std::vector<
         }
         // exiting verticals don't participate in next cross-section
         cross_section = recompute_cross_section(heap_set);
+        last_row = next;
     }
+    std::cout << push_count << " = push_count, " << heap.size() << " = heap size\n";
+    // todo todo todo !!!! heap at end may have multiple bottoms
+    // wait why is final last_row +51, but tops and bottoms -300 ish.
+    // violate invariant???
     // bottom row still contained
+    my_assert(!heap.empty() && !heap_set.empty(), "heap not empty at end");
     cross_section = recompute_cross_section(heap_set);
     const auto next = get_bottom(heap.top());
-    return area + cross_section * std::abs(next - last_row);
+    const auto foo = get_top(heap.top());
+    // todo next is negative for data part 1
+    std::cout << foo << ' ' << next << ' ' << last_row << '\n';
+    return area + cross_section * (next - last_row);  // todo
 }
 
 int main() {
