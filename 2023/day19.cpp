@@ -81,42 +81,6 @@ std::string perform_all(const std::vector<long> &values, const std::map<std::str
     return cur;
 }
 
-void foo4() {
-    constexpr char filepath[] = "/tmp/example.txt";
-    if (auto fs = std::ifstream(filepath)) {
-        std::map<std::string, std::vector<std::string>> ins_map;
-        std::string word;
-        while ((fs >> word) && word.front() != '{') {
-            add_to_map(word, ins_map);
-        }
-        decltype(get_values(word)) values;
-        long part1 = 0;
-        do {
-            values = get_values(word);
-            if ("A" == perform_all(values, ins_map)) {
-                part1 += std::accumulate(values.cbegin(), values.cend(), 0L);
-            }
-        } while (fs >> word);
-        std::cout << "part 1 = " << part1 << '\n';  // 402185
-    } else {
-        my_assert(false, "wrong filepath");
-    }
-}
-
-void explore(const std::map<std::string, std::vector<std::string>> &ins_map) {
-    std::string cur = "in";
-    /*
-     * have range of values
-     * explore map and constantly narrow down
-     * if R, terminate
-     * then collect all of them together and merge result; dedupe
-     * given ranges starting 1 - 4000 in all, start with in. Bifurcate
-     * on first one, with > and <=, then for >, go to second one and bifurcate
-     * there too. Do this recursively. Should have index too in the recursion,
-     * and also pass in an array to append accepted ranges.
-     */
-}
-
 using Range = std::pair<int, int>;
 using FourRange = std::tuple<Range, Range, Range, Range>;
 
@@ -127,6 +91,15 @@ void update_single_range(const std::string &comparison, Range &range) {
         range.second = std::min(range.second, rhs - 1);
     } else {  // >
         range.first = std::max(range.first, rhs + 1);
+    }
+}
+
+void update_single_range_complement(const std::string &comparison, Range &range) {
+    const auto rhs = std::stoi(comparison.substr(2));
+    if (comparison[1] == '<') {  // becomes >=
+        range.first = std::max(range.first, rhs);
+    } else {  // > becomes <=
+        range.second = std::min(range.second, rhs);
     }
 }
 
@@ -157,6 +130,32 @@ FourRange update_ranges(const std::string &comparison, FourRange ranges) {
     return ranges;
 }
 
+FourRange update_ranges_complement(const std::string &comparison, FourRange ranges) {
+    switch (comparison[0]) {
+        case 'x': {
+            update_single_range_complement(comparison, std::get<0>(ranges));
+            break;
+        }
+        case 'm': {
+            update_single_range_complement(comparison, std::get<1>(ranges));
+            break;
+        }
+        case 'a': {
+            update_single_range_complement(comparison, std::get<2>(ranges));
+            break;
+        }
+        case 's': {
+            update_single_range_complement(comparison, std::get<3>(ranges));
+            break;
+        }
+        default: {
+            std::cout << comparison << " update range complement\n";
+            throw std::exception();
+        }
+    }
+    return ranges;
+}
+
 void recurse(
         const std::map<std::string, std::vector<std::string>> &ins_map,
         const std::string &cur,
@@ -171,10 +170,11 @@ void recurse(
     } else if (ins == "A") {
         accepted.push_back(ranges);
         // todo: maybe do some merging to dedupe and avoid blowup
-    } else {  // instruction, has colon
+    } else {
         const auto colon = ins.find(':');
         if (colon == std::string::npos) {
             // neither R, A, nor comparison, hence is a register name
+            my_assert(ind + 1 == ins_list.size(), "expected register to be last");
             recurse(ins_map, ins, 0, ranges, accepted);
             return;
         }
@@ -184,38 +184,45 @@ void recurse(
         if (next == "A") {
             accepted.push_back(new_ranges);
             // don't return, because need to recurse ind+1
-        } else if (next != "R") {
+        } else if (next != "R") {  // register
             recurse(ins_map, next, 0, new_ranges, accepted);
         }
+        const auto complement_ranges = update_ranges_complement(ins.substr(0, colon), ranges);
         if (ind+1 < ins_list.size()) {
-            recurse(ins_map, cur, ind+1, ranges, accepted);
+            recurse(ins_map, cur, ind+1, complement_ranges, accepted);
         }
     }
 }
 
-void foo5() {
-    constexpr char filepath[] = "/tmp/example.txt";
+int main() {
+    constexpr char filepath[] = "/tmp/data.txt";
     if (auto fs = std::ifstream(filepath)) {
         std::map<std::string, std::vector<std::string>> ins_map;
         std::string word;
         while ((fs >> word) && word.front() != '{') {
             add_to_map(word, ins_map);
         }
+        decltype(get_values(word)) values;
+        long part1 = 0;
+        do {
+            values = get_values(word);
+            if ("A" == perform_all(values, ins_map)) {
+                part1 += std::accumulate(values.cbegin(), values.cend(), 0L);
+            }
+        } while (fs >> word);
+        std::cout << "part 1 = " << part1 << '\n';  // 402185
+        //
         FourRange ranges{{1, 4000}, {1, 4000}, {1, 4000}, {1, 4000}};
         std::vector<FourRange> accepted;
         recurse(ins_map, "in", 0, ranges, accepted);
+        long part2 = 0;
+        // data just happens to cause these sets to be disjoint, so no inclusion-exclusion
+        // shenanigans needed
         for (const auto &[x, m, a, s] : accepted) {
-            std::cout << "x in " << x.first << '-' << x.second << ", ";
-            std::cout << "m in " << m.first << '-' << m.second << ", ";
-            std::cout << "a in " << a.first << '-' << a.second << ", ";
-            std::cout << "s in " << s.first << '-' << s.second << "\n";
+            part2 += 1L * (x.second - x.first + 1) * (m.second - m.first + 1) * (a.second - a.first + 1) * (s.second - s.first + 1);
         }
-        std::cout << accepted.size() << '\n';
+        std::cout << "part 2 = " << part2 << '\n';  // 130291480568730
     } else {
         my_assert(false, "wrong filepath");
     }
-}
-
-int main() {
-    foo5();
 }
