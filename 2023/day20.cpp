@@ -6,6 +6,7 @@
 #include <fstream>
 #include <sstream>
 #include <string_view>
+#include <memory>
 
 struct Input {
     char type = 0;
@@ -59,6 +60,15 @@ std::pair<std::vector<std::string>, std::vector<Input>> read_file(const char *fi
         throw std::exception();
     }
 }
+
+class Module {
+    const std::vector<std::string> rhs;
+public:
+    explicit Module(std::vector<std::string> rhs): rhs(std::move(rhs)) {}
+    virtual void receive() = 0;
+    virtual void send() = 0;
+    virtual ~Module() = default;
+};
 
 void foo1() {
     constexpr char filepath[] = "/home/employee/Documents/temp/example1.txt";
