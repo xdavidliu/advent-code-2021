@@ -61,14 +61,24 @@ std::pair<std::vector<std::string>, std::vector<Input>> read_file(const char *fi
     }
 }
 
+// todo: if RHS has output, that's not a module
+
 class Module {
-    const std::vector<std::string> rhs;
+    const std::vector<std::string> dests;
 public:
-    explicit Module(std::vector<std::string> rhs): rhs(std::move(rhs)) {}
+    explicit Module(std::vector<std::string> dests): dests(std::move(dests)) {}
     virtual void receive() = 0;
     virtual void send() = 0;
     virtual ~Module() = default;
 };
+
+/*
+ * have inputs, create map of all lhs, key lhs to val shared_ptr<Module>
+ * Module can be Flip or Conjunct
+ * for each input, for each elem in rhs, insert into lhs's module's dests field
+ * also do inputs. For conjuncts, also have srcs field, populated during above
+ * for each module, have last_sent so conjuncts can easily see
+ */
 
 void foo1() {
     constexpr char filepath[] = "/home/employee/Documents/temp/example1.txt";
