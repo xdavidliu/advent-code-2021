@@ -1,57 +1,69 @@
 #include <iostream>
-#include <string>
-#include <vector>
-#include <set>
 #include <fstream>
-#include <algorithm>
+#include <vector>
+#include <string>
 #include <exception>
-#include <utility>
 
-auto read_grid(const char *filepath) {
-  if (auto fs = std::ifstream(filepath)) {
-    std::string line;
+constexpr char oh = 'O';
+constexpr char garden = '.';
+
+auto get_grid(const char *filename) {
+    auto fs = std::ifstream(filename);
     std::vector<std::string> grid;
+    std::string line;
     while (std::getline(fs, line)) {
-      grid.push_back(line);
+        grid.push_back(line);
     }
-    return grid;
-  } else {
+    for (auto row = grid.begin(); row != grid.end(); ++row) {
+        const auto col = row->find('S');
+        if (col != std::string::npos) {
+            row->at(col) = '.';
+            return std::make_tuple(grid, row - grid.begin(), static_cast<long>(col));
+        }
+    }
     throw std::exception();
-  }
 }
 
-auto find_start(const std::vector<std::string> &grid) {
-  for (std::size_t r = 0; r < grid.size(); ++r) {
-    for (std::size_t c = 0; c < grid.front().size(); ++c) {
-      if ('S' == grid[r][c]) { return std::make_pair(r, c); }
+void print_grid(const std::vector<std::string> &grid, const char *filename) {
+    auto ofs = std::ofstream(filename);
+    for (const auto &elem : grid) {
+        ofs << elem << '\n';
     }
-  }
-  throw std::exception();
+}
+
+void copy_in_place(std::vector<std::string> &dest, const std::vector<std::string> &src) {
+    auto dit = dest.begin();
+    auto sit = src.cbegin();
+    for (; sit != src.cend(); ++dit, ++sit) {
+        std::copy(sit->cbegin(), sit->cend(), dit->begin());
+    }
+}
+
+void one_step(std::vector<std::string> &dest, const std::vector<std::string> &src) {
+    for (std::size_t r = 0; r < src.size(); ++r) {
+        for (std::size_t c = 0; c < src.front().size(); ++c) {
+            if (src[r][c] != oh) { continue; }
+            if (r != 0 && dest[r-1][c] == garden) { dest[r-1][c] = oh; }
+            if (r+1 != src.size() && dest[r+1][c] == garden) { dest[r+1][c] = oh; }
+            if (c != 0 && dest[r][c-1] == garden) { dest[r][c-1] = oh; }
+            if (c+1 != src.front().size() && dest[r][c+1] == garden) { dest[r][c+1] = oh; }
+        }
+    }
 }
 
 void foo1() {
-  constexpr char filepath[] = "/tmp/data.txt";
-  const auto grid = read_grid(filepath);
-  std::set<std::pair<long, long>> curr, next;
-  curr.insert(find_start(grid));
-  for (int i = 0; i < 64; ++i) {
-    next.clear();
-    constexpr int diffs[4][2] = {{-1, 0}, {1, 0}, {0, 1}, {0, -1}};
-
-    for (const auto &[row_cur, col_cur] : curr) {
-      for (const auto [dr, dc] : diffs) {
-        const auto row = row_cur + dr, col = col_cur + dc;
-        if (row < 0 || row >= grid.size()) { continue; }
-        if (col < 0 || col >= grid.front().size()) { continue; }
-        if (grid[row][col] == '#') { continue; }
-        next.insert({row, col});
-      }
+    const auto [empty_grid, start_row, start_col] = get_grid("/home/employee/Documents/temp/data.txt");
+    auto cur = empty_grid, next = empty_grid;
+    cur[start_row][start_col] = oh;
+    constexpr int steps = 60;
+    for (int i = 0; i < steps; ++i) {
+        one_step(next, cur);
+        cur.swap(next);
+        copy_in_place(next, empty_grid);
     }
-    curr.swap(next);
-  }
-  std::cout << "part 1 = " << curr.size() << '\n';
+    print_grid(cur, "/home/employee/Documents/temp/out.txt");
 }
 
 int main() {
-  foo1();
+    foo1();
 }
