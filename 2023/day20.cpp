@@ -118,7 +118,7 @@ auto get_last_sent_to_from(const std::map<std::string, char> &type_of, const std
 }
 
 void foo1() {
-    constexpr char filepath[] ="/home/employee/Documents/temp/example1.txt";
+    constexpr char filepath[] ="/home/employee/Documents/temp/example2.txt";
     const auto [type_of, neighbors] = read_file(filepath);
     const auto converge_neighbors = get_converge_neighbors(type_of, neighbors);
     auto last_sent_to_from = get_last_sent_to_from(type_of, neighbors);
@@ -126,8 +126,9 @@ void foo1() {
     auto flip_on = get_flip_on(type_of);
     std::deque<Pulse> que;
     // push button
-    std::cout << neighbors.count(broadcaster) << " push button start\n";
+    long low_count = 1, high_count = 0;
     for (const auto& dest: neighbors.at(broadcaster)) {
+        ++low_count;
         que.push_back({broadcaster, dest, false});
     }
     while (!que.empty()) {
@@ -138,13 +139,18 @@ void foo1() {
         if (found != type_of.cend()) {
             switch (found->second) {
                 case '%': {  // flip
-                    auto flip_iter = flip_on.find(dest);
-                    const auto old_val = flip_iter->second;
-                    flip_iter->second = !old_val;
+                    // "If a flip-flop module receives a high pulse, it is ignored
+                    // and nothing happens."
+                    if (high) { continue; }
+                    // "However, if a flip-flop module receives a low pulse, it flips between on and off."
+                    auto &found_flip = flip_on[dest];
+                    const auto old_val = found_flip;
+                    found_flip = !found_flip;
                     for (const auto &neigh : neighbors.at(dest)) {
                         // "If it was off, it turns on and sends a high pulse. If it was on,
                         // it turns off and sends a low pulse."
                         que.push_back({dest, neigh, !old_val});
+                        if (old_val) { ++low_count; } else { ++high_count; }
                     }
                     break;
                 }
@@ -160,6 +166,7 @@ void foo1() {
                         // if it remembers high pulses for all inputs, it sends a low pulse;
                         // otherwise, it sends a high pulse.
                         que.push_back({dest, neigh, !all_high});
+                        if (all_high) { ++low_count; } else { ++high_count; }
                     }
                     break;
                 }
@@ -173,6 +180,7 @@ void foo1() {
             std::cout << dest << " received " << signal << '\n';
         }
     }
+    std::cout << "part 1 = " << low_count * high_count * 1'000'000L << '\n';
 }
 
 int main() {
