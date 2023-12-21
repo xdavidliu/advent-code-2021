@@ -118,69 +118,74 @@ auto get_last_sent_to_from(const std::map<std::string, char> &type_of, const std
 }
 
 void foo1() {
-    constexpr char filepath[] ="/home/employee/Documents/temp/example2.txt";
+    constexpr char filepath[] ="/home/employee/Documents/temp/data.txt";
     const auto [type_of, neighbors] = read_file(filepath);
     const auto converge_neighbors = get_converge_neighbors(type_of, neighbors);
     auto last_sent_to_from = get_last_sent_to_from(type_of, neighbors);
     // "Flip-flop modules ... are initially off."
     auto flip_on = get_flip_on(type_of);
     std::deque<Pulse> que;
-    // push button
-    long low_count = 1, high_count = 0;
-    for (const auto& dest: neighbors.at(broadcaster)) {
+    long low_count = 0, high_count = 0;
+    for (int i = 0; i < 1000; ++i) {
+        // push button
         ++low_count;
-        que.push_back({broadcaster, dest, false});
-    }
-    while (!que.empty()) {
-        const auto [src, dest, high] = que.front();
-        que.pop_front();
-        last_sent_to_from[dest][src] = high;
-        const auto found = type_of.find(dest);
-        if (found != type_of.cend()) {
-            switch (found->second) {
-                case '%': {  // flip
-                    // "If a flip-flop module receives a high pulse, it is ignored
-                    // and nothing happens."
-                    if (high) { continue; }
-                    // "However, if a flip-flop module receives a low pulse, it flips between on and off."
-                    auto &found_flip = flip_on[dest];
-                    const auto old_val = found_flip;
-                    found_flip = !found_flip;
-                    for (const auto &neigh : neighbors.at(dest)) {
-                        // "If it was off, it turns on and sends a high pulse. If it was on,
-                        // it turns off and sends a low pulse."
-                        que.push_back({dest, neigh, !old_val});
-                        if (old_val) { ++low_count; } else { ++high_count; }
-                    }
-                    break;
-                }
-                case '&': {  // converge
-                    bool all_high = true;
-                    for (const auto &[ignore, high] : last_sent_to_from.at(dest)) {
-                        if (!high) {
-                            all_high = false;
-                            break;
+        for (const auto& dest: neighbors.at(broadcaster)) {
+            ++low_count;
+            que.push_back({broadcaster, dest, false});
+        }
+        while (!que.empty()) {
+            const auto [src, dest, high] = que.front();
+            que.pop_front();
+            last_sent_to_from[dest][src] = high;
+            const auto found = type_of.find(dest);
+            if (found != type_of.cend()) {
+                switch (found->second) {
+                    case '%': {  // flip
+                        // "If a flip-flop module receives a high pulse, it is ignored
+                        // and nothing happens."
+                        if (high) { continue; }
+                        // "However, if a flip-flop module receives a low pulse, it flips between on and off."
+                        auto &found_flip = flip_on[dest];
+                        const auto old_val = found_flip;
+                        found_flip = !found_flip;
+                        for (const auto &neigh : neighbors.at(dest)) {
+                            // "If it was off, it turns on and sends a high pulse. If it was on,
+                            // it turns off and sends a low pulse."
+                            que.push_back({dest, neigh, !old_val});
+                            if (old_val) { ++low_count; } else { ++high_count; }
                         }
+                        break;
                     }
-                    for (const auto &neigh : neighbors.at(dest)) {
-                        // if it remembers high pulses for all inputs, it sends a low pulse;
-                        // otherwise, it sends a high pulse.
-                        que.push_back({dest, neigh, !all_high});
-                        if (all_high) { ++low_count; } else { ++high_count; }
+                    case '&': {  // converge
+                        bool all_high = true;
+                        for (const auto &[ignore, high] : last_sent_to_from.at(dest)) {
+                            if (!high) {
+                                all_high = false;
+                                break;
+                            }
+                        }
+                        for (const auto &neigh : neighbors.at(dest)) {
+                            // if it remembers high pulses for all inputs, it sends a low pulse;
+                            // otherwise, it sends a high pulse.
+                            que.push_back({dest, neigh, !all_high});
+                            if (all_high) { ++low_count; } else { ++high_count; }
+                        }
+                        break;
                     }
-                    break;
+                    default: {
+                        std::cout << found->second << " invalid found->second\n";
+                        throw std::exception();
+                    }
                 }
-                default: {
-                    std::cout << found->second << " invalid found->second\n";
-                    throw std::exception();
-                }
+            } else {  // dest no type; maybe output or something
+                const auto signal = high ? "high" : "low";
+                // std::cout << dest << " received " << signal << '\n';
             }
-        } else {  // dest no type; maybe output or something
-            const auto signal = high ? "high" : "low";
-            std::cout << dest << " received " << signal << '\n';
         }
     }
-    std::cout << "part 1 = " << low_count * high_count * 1'000'000L << '\n';
+    std::cout << "part 1 = " << low_count * high_count << '\n';  // 883726240
+    // todo: look for cycles. for example1, cycle is just one press
+    // for others may be multiple presses
 }
 
 int main() {
