@@ -118,23 +118,7 @@ auto get_last_sent_to_from(const std::map<std::string, char> &type_of, const std
     return out;
 }
 
-void foo2() {
-    constexpr char filepath[] ="/home/employee/Documents/temp/data.txt";
-    const auto [type_of, neighbors] = read_file(filepath);
-    const std::string target = "bx";
-    for (const auto &[key, val] : neighbors) {
-        const auto found = std::find(val.cbegin(), val.cend(), target);
-        if (found != val.cend()) {
-            const auto type_found = type_of.find(key);
-            if (type_found != type_of.cend()) {
-                std::cout << type_found->second;
-            }
-            std::cout << key << ' ';
-        }
-    }
-}
-
-void foo1() {
+int main() {
     constexpr char filepath[] ="/home/employee/Documents/temp/data.txt";
     const auto [type_of, neighbors] = read_file(filepath);
     const auto converge_neighbors = get_converge_neighbors(type_of, neighbors);
@@ -153,7 +137,7 @@ void foo1() {
         while (!que.empty()) {
             const auto [src, dest, high] = que.front();
             if (src == "zt" && !high) {
-                std::cout << presses << " had low\n";
+                // std::cout << presses << " had low\n";
                 // this being low means at this button_ind, all the % parents are 1
                 // hence on NEXT button_ind, they are back to zero again.
                 // for gt:
@@ -161,7 +145,7 @@ void foo1() {
                 //7594 had low
                 //11391 had low
                 std::cout << "part 2 = " << 211712400442661L << '\n';
-                return;
+                return 0;
                 // gt, xd, ms, zt  <- grandparents of bb, which is parent of rx
                 // LCM(3797, 3733, 3907, 3823)
             }
