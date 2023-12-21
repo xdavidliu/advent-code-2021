@@ -62,6 +62,7 @@ auto repeat_string(const std::size_t times, const std::string &str) {
 }
 
 auto repeat_grid(const std::size_t times, const std::vector<std::string> &grid) {
+    if (times == 1) { return grid; }
     std::vector<std::string> out;
     const auto func = [times] (const auto &str) { return repeat_string(times, str); };
     std::transform(grid.cbegin(), grid.cend(), std::back_inserter(out), func);
@@ -83,26 +84,7 @@ auto count_oh(const std::vector<std::string> &grid) {
     return count;
 }
 
-void foo1() {
-    const auto [empty_grid, start_row, start_col] = get_grid("/home/employee/Documents/temp/data.txt");
-    auto cur = empty_grid, next = empty_grid;
-    cur[start_row][start_col] = oh;
-    constexpr int steps = 100;
-    for (int i = 0; i < steps; ++i) {
-        one_step(next, cur);
-        cur.swap(next);
-        copy_in_place(next, empty_grid);
-    }
-    print_grid(cur, "/home/employee/Documents/temp/out.txt");
-}
-
-void foo2() {
-    std::vector<std::string> grid{"abc", "def", "ghi"};
-    const auto rep = repeat_grid(3, grid);
-    print_grid(rep, "/home/employee/Documents/temp/out2.txt");
-}
-
-void foo3() {
+void run_simulation() {
     const auto [orig_empty_grid, orig_start_row, orig_start_col] = get_grid("/home/employee/Documents/temp/data.txt");
     constexpr std::size_t times = 5;  // has to be odd!
     const auto empty_grid = repeat_grid(times, orig_empty_grid);
@@ -110,7 +92,7 @@ void foo3() {
     const auto start_col = (times / 2) * orig_empty_grid.front().size() + orig_start_col;
     auto cur = empty_grid, next = empty_grid;
     cur[start_row][start_col] = oh;
-    constexpr std::size_t steps = 195;
+    constexpr std::size_t steps = 327;
     for (size_t i = 0; i < steps; ++i) {
         one_step(next, cur);
         cur.swap(next);
@@ -121,5 +103,5 @@ void foo3() {
 }
 
 int main() {
-    foo3();
+    run_simulation();
 }
