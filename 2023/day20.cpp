@@ -1,5 +1,6 @@
 #include <iostream>
 #include <vector>
+#include <algorithm>
 #include <map>
 #include <string>
 #include <exception>
@@ -117,6 +118,22 @@ auto get_last_sent_to_from(const std::map<std::string, char> &type_of, const std
     return out;
 }
 
+void foo2() {
+    constexpr char filepath[] ="/home/employee/Documents/temp/data.txt";
+    const auto [type_of, neighbors] = read_file(filepath);
+    const std::string target = "bx";
+    for (const auto &[key, val] : neighbors) {
+        const auto found = std::find(val.cbegin(), val.cend(), target);
+        if (found != val.cend()) {
+            const auto type_found = type_of.find(key);
+            if (type_found != type_of.cend()) {
+                std::cout << type_found->second;
+            }
+            std::cout << key << ' ';
+        }
+    }
+}
+
 void foo1() {
     constexpr char filepath[] ="/home/employee/Documents/temp/data.txt";
     const auto [type_of, neighbors] = read_file(filepath);
@@ -126,8 +143,7 @@ void foo1() {
     auto flip_on = get_flip_on(type_of);
     std::deque<Pulse> que;
     long low_count = 0, high_count = 0;
-    bool part2_done = false;
-    for (int button_ind = 0; button_ind < 1000 || !part2_done; ++button_ind) {
+    for (int presses = 1; presses < 20000; ++presses) {
         // push button
         ++low_count;
         for (const auto& dest: neighbors.at(broadcaster)) {
@@ -136,9 +152,18 @@ void foo1() {
         }
         while (!que.empty()) {
             const auto [src, dest, high] = que.front();
-            if (dest == "rx" && !high) {
-                std::cout << "part 2 = " << (1 + button_ind) << '\n';
-                part2_done = true;
+            if (src == "zt" && !high) {
+                std::cout << presses << " had low\n";
+                // this being low means at this button_ind, all the % parents are 1
+                // hence on NEXT button_ind, they are back to zero again.
+                // for gt:
+                //3797 had low
+                //7594 had low
+                //11391 had low
+                std::cout << "part 2 = " << 211712400442661L << '\n';
+                return;
+                // gt, xd, ms, zt  <- grandparents of bb, which is parent of rx
+                // LCM(3797, 3733, 3907, 3823)
             }
             que.pop_front();
             last_sent_to_from[dest][src] = high;
@@ -163,8 +188,8 @@ void foo1() {
                     }
                     case '&': {  // converge
                         bool all_high = true;
-                        for (const auto &[ignore, high] : last_sent_to_from.at(dest)) {
-                            if (!high) {
+                        for (const auto &[ignore, last_high] : last_sent_to_from.at(dest)) {
+                            if (!last_high) {
                                 all_high = false;
                                 break;
                             }
@@ -187,15 +212,8 @@ void foo1() {
                 // std::cout << dest << " received " << signal << '\n';
             }
         }
-        if (button_ind == 1000 - 1) {
+        if (presses == 1000) {
             std::cout << "part 1 = " << low_count * high_count << '\n';  // 883726240
         }
     }
-
-    // todo: look for cycles. for example1, cycle is just one press
-    // for others may be multiple presses
-}
-
-int main() {
-    foo1();
 }
