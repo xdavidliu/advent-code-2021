@@ -103,11 +103,22 @@ auto run_simulation(const std::size_t k, std::size_t steps) {
 //    print_grid(cur, "/home/employee/Documents/temp/out3.txt");
 }
 
+// see notes below
+long part2() {
+    long k = 0, count = 3832, diff = 30135;
+    while (k != 202300) {
+        count += diff;
+        diff += 29954;
+        ++k;
+    }
+    return count;
+}
+
 int main() {
     const auto part1 = run_simulation(0, 64);
     std::cout << "part 1 = " << part1 << '\n';  // 3649
     // std::cout << run_simulation(1, 0);  // for part 2
-    std::cout << "part 2 = 612941134797232\n";  // see python script below
+    std::cout << "part 2 = " << part2() << '\n';
 }
 
 // print out grid for various values of times and steps above
@@ -127,16 +138,3 @@ int main() {
 // k = 5 -> 454047
 //
 // note the diffs of diffs are all 29954
-//
-/*
- * python:
-k = 0
-count = 3832
-diff = 30135
-while k != 202300:
-  count += diff
-  diff += 29954
-  k += 1
-
-print(count)
- */
