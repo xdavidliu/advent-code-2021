@@ -84,24 +84,59 @@ auto count_oh(const std::vector<std::string> &grid) {
     return count;
 }
 
-void run_simulation() {
+auto run_simulation(const std::size_t k, std::size_t steps) {
+    if (k > 5) { return std::size_t{0}; }  // avoid OOMing
     const auto [orig_empty_grid, orig_start_row, orig_start_col] = get_grid("/home/employee/Documents/temp/data.txt");
-    constexpr std::size_t times = 5;  // has to be odd!
+    if (steps == 0) { steps = 65 + 131 * k; }
+    const auto times = 2 * k + 1;
     const auto empty_grid = repeat_grid(times, orig_empty_grid);
     const auto start_row = (times / 2) * orig_empty_grid.size() + orig_start_row;
     const auto start_col = (times / 2) * orig_empty_grid.front().size() + orig_start_col;
     auto cur = empty_grid, next = empty_grid;
     cur[start_row][start_col] = oh;
-    constexpr std::size_t steps = 327;
     for (size_t i = 0; i < steps; ++i) {
         one_step(next, cur);
         cur.swap(next);
         copy_in_place(next, empty_grid);
     }
-    std::cout << count_oh(cur) << " = count oh\n";
-    print_grid(cur, "/home/employee/Documents/temp/out3.txt");
+    return count_oh(cur);
+//    print_grid(cur, "/home/employee/Documents/temp/out3.txt");
 }
 
 int main() {
-    run_simulation();
+    const auto part1 = run_simulation(0, 64);
+    std::cout << "part 1 = " << part1 << '\n';  // 3649
+    // std::cout << run_simulation(1, 0);  // for part 2
+    std::cout << "part 2 = 612941134797232\n";  // see python script below
 }
+
+// print out grid for various values of times and steps above
+// note that there's an O at very top for steps = 65 + 131 k where k = 0, 1, 2 ...
+// note that 26501365 is of this form, with k = 202300
+// hence, find formula for count_oh for any given k
+// k = 0 -> 3832
+//   30135
+// k = 1 -> 33967
+//   60089
+// k = 2 -> 94056
+//   90043
+// k = 3 -> 184099
+//   119997
+// k = 4 -> 304096
+//   149951
+// k = 5 -> 454047
+//
+// note the diffs of diffs are all 29954
+//
+/*
+ * python:
+k = 0
+count = 3832
+diff = 30135
+while k != 202300:
+  count += diff
+  diff += 29954
+  k += 1
+
+print(count)
+ */
