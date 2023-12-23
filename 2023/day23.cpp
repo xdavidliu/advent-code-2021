@@ -23,7 +23,17 @@ void recurse(std::vector<std::string> grid, int row_from, int col_from, int step
     while (true) {
         if (row_from == grid.size()-1 && col_from == grid.front().size()-2) {
             // std::cout << "found path " << (steps + 1) << '\n';
-            best = std::max(best, steps + 1);
+//            if (steps + 1 > best) {
+//                best = steps + 1;
+//                std::cout <<
+//            }
+            if (steps + 1 > best) {
+                best = steps + 1;
+                std::cout << best << ' ';
+                std::cout.flush();
+                // 4678 4714 4802 5134 5170 5238 5302 5634 5670 5742 5778 5782 5934 6042 6074 6106 6226 6230 6294 6314 6434 6450 6490 6498 6514 6554
+            }
+            // std::cout << best << ' ';
             return;
         }
         const auto this_ch = grid[row_from][col_from];
@@ -66,6 +76,14 @@ void recurse(std::vector<std::string> grid, int row_from, int col_from, int step
     }
 }
 
+void delete_slopes(std::vector<std::string> &grid) {
+    for (auto &row : grid) {
+        for (auto &ch : row) {
+            if (ch != wall && ch != dot) { ch = dot; }
+        }
+    }
+}
+
 void foo1() {
     const char *filepath = "/home/employee/Documents/temp/data.txt";
     auto fs = std::ifstream(filepath);
@@ -76,10 +94,17 @@ void foo1() {
         grid.push_back(line);
     }
     grid[0][1] = wall;  // hack so no need to bound check
+    auto grid_part2 = grid;
+    delete_slopes(grid_part2);
     int best = -1;
     // 0 steps because (1,1) not shaded yet
-    recurse(grid, 1, 1, 0, best);
+//    recurse(grid, 1, 1, 0, best);
     std::cout << "part 1 = " << best << '\n';  // 2394
+
+    int best2 = -1;
+    recurse(grid_part2, 1, 1, 0, best2);
+    std::cout << "part 2 = " << best2 << '\n';  // 6554 but doesn't actually complete running, but already good enough
+
 }
 
 int main() {
