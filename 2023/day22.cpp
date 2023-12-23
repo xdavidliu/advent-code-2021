@@ -31,7 +31,7 @@ struct Brick {
     bool operator!=(const Brick &other) const {
         return !operator==(other);
     }
-    bool operator<(const Brick &rhs) {
+    bool operator<(const Brick &rhs) const {
         const auto tup_lhs = std::make_tuple(x0, y0, z0, x1, y1, z1);
         const auto tup_rhs = std::make_tuple(rhs.x0, rhs.y0, rhs.z0, rhs.x1, rhs.y1, rhs.z1);
         return tup_lhs < tup_rhs;
@@ -127,23 +127,21 @@ auto how_many_fall_without(const std::size_t z1_init, const Brick &to_remove,
                            const std::vector<std::vector<Brick>> &bricks_by_top,
                            const std::vector<std::vector<Brick>> &bricks_by_bottom)
 {
-    std::vector<Brick> in_last, in_this;
-    std::size_t out = 0;
-    for (const auto &brick : bricks_by_top[z1_init]) {
-        if (brick != to_remove) { in_last.push_back(brick); }
-    }
+    // oh, you can't overlap last; those are BOTTOMS. You need to do TOPS.
+    std::set<Brick> removed;
+    removed.insert(to_remove);
     for (std::size_t z0 = z1_init + 1; z0 < bricks_by_bottom.size(); ++z0) {
-        in_this.clear();
+        const auto &below = bricks_by_top[z0 - 1];
         for (const auto &brick : bricks_by_bottom[z0]) {
-            const auto overlaps = [&brick] (const Brick &other) { return is_overlap(brick, other); };
-            if (std::any_of(in_last.cbegin(), in_last.cend(), overlaps)) {
-                in_this.push_back(brick);  // won't fall
-            } else { ++out; }
+            const auto overlaps_non_removed = [&brick, &removed] (const Brick &other) {
+                return 0 == removed.count(other) && is_overlap(brick, other);
+            };
+            if (std::none_of(below.cbegin(), below.cend(), overlaps_non_removed)) {
+                removed.insert(brick);
+            }
         }
-        if (in_this.size() == bricks_by_bottom[z0].size()) { break; }
-        in_this.swap(in_last);
     }
-    return out;
+    return removed.size() - 1;  // don't count first one
 }
 
 auto do_part2(const std::vector<std::vector<Brick>> &bricks_by_top,
@@ -177,8 +175,7 @@ int main() {
     // for (long z0 = 1; z0 < bricks_by_bottom.size()
     std::cout << "part 1 = " << (bricks_at_snap.size() - sole) << '\n';  // 393
     const auto part2 = do_part2(bricks_by_top, bricks_by_bottom);
-    std::cout << "part 2 = " << part2 << '\n';
-    // 182367 too high
+    std::cout << "part 2 = " << part2 << '\n';  // 58440
 }
 
 /*
