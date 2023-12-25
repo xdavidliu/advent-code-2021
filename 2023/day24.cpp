@@ -9,6 +9,7 @@
 #include <boost/multiprecision/cpp_bin_float.hpp>
 #include <boost/rational.hpp>
 #include <boost/numeric/ublas/matrix.hpp>
+#include <boost/numeric/ublas/vector.hpp>
 #include <boost/numeric/ublas/io.hpp>
 #include <boost/numeric/ublas/lu.hpp>
 
@@ -75,8 +76,7 @@ bool will_intersect_xy(const Stone &p1, const Stone &p2) {
     return true;
 }
 
-void foo1() {
-    const auto things = parse_file();
+void do_part1(const std::vector<Stone> &things) {
     // data happens to have no verticals, i.e. vy != 0
     int part1 = 0;
     for (int i = 0; i + 1 < things.size(); ++i) {
@@ -145,6 +145,62 @@ void foo4() {
     // https://stackoverflow.com/a/1297730/2990344
 }
 
+void populate_rhs(const std::vector<Stone> &stones, const vector<cpp_bin_float_100> &p, vector<cpp_bin_float_100> &f) {
+    for (int i = 0; i < 3; ++i) {
+        const auto &s = stones[i];
+        f(i * 3) = p(0) - stones[i].x + p(6) * (p(3) - s.vx);
+        f(i * 3 + 1) = p(1) - stones[i].y + p(7) * (p(4) - s.vy);
+        f(i * 3 + 2) = p(2) - stones[i].z + p(8) * (p(5) - s.vz);
+    }
+}
+
+void populate_jacob(const std::vector<Stone> &stones, const vector<cpp_bin_float_100> &p, matrix<cpp_bin_float_100> &j) {
+    for (int i = 0; i < 9; ++i) {
+        for (int k = 0; k < 9; ++k) { j(i, k) = 0; }
+    }
+    for (int i = 0; i < 3; ++i) {
+        const auto &s = stones[i];
+        const long sv[] = {s.vx, s.vy, s.vz};
+        for (int k = 0; k < 3; ++k) {
+            j(3 * i + k, k) = 1;  // d/dx
+            j(3 * i + k, 3 + k) = p(6 + i);  // d/dv
+            j(3 * i + k, 6 + i) = p(3 + k) - sv[k];  // d/dt
+        }
+    }
+}
+
+auto norm_sq(const vector<cpp_bin_float_100> &p) {
+    cpp_bin_float_100 out = 0;
+    for (const auto &x : p) {
+        out += x * x;
+    }
+    return out;
+}
+
+void do_part2(const std::vector<Stone> &stones) {
+    vector<cpp_bin_float_100> p(9), dp(9), f(9);
+    matrix<cpp_bin_float_100> j(9, 9);
+    // random guess
+    p[0] = 224164924449606L;
+    p[1] = 373280170830371L;
+    p[2] = 280954002548352L;
+    p[3] = 30; p[4] = 12; p[5] = -200;
+    p[6] = 3; p[7] = 8; p[8] = 5;
+    for (int i = 0; i < 50; ++i) {
+        populate_rhs(stones, p, f);
+        std::cout << norm_sq(f) << '\n';
+        populate_jacob(stones, p, j);
+        dp = -f;
+        permutation_matrix<std::size_t> pm(j.size1());
+        lu_factorize(j, pm);
+        lu_substitute(j, pm, dp);
+        p += dp;
+    }
+    // use negative for rhs
+}
+
 int main() {
-    foo4();
+    const auto things = parse_file();
+    // do_part1(things);
+    do_part2(things);
 }
