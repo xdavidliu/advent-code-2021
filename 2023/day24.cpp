@@ -86,71 +86,7 @@ void do_part1(const std::vector<Stone> &things) {
     std::cout << "part 1 = " << part1 << '\n';  // 16172
 }
 
-void foo4() {
-    // https://www.boost.org/doc/libs/1_82_0/libs/numeric/ublas/doc/matrix.html#matrix
-    matrix<cpp_bin_float_100> mat(2, 2);
-    mat(0, 0) = 2;
-    mat(0, 1) = 1;
-    mat(1, 0) = 1;
-    mat(1, 1) = 1;
-    vector<cpp_bin_float_100> vec(2);
-    vec(0) = -1;
-    vec(1) = 1;
-    permutation_matrix<std::size_t> pm(mat.size1());
-    lu_factorize(mat, pm);
-    lu_substitute(mat, pm, vec);
-    std::cout << vec(0) << ", " << vec(1) << '\n';
-    // https://stackoverflow.com/a/1297730/2990344
-}
-
-/*
- * x = x0 + vx t
- * y = y0 + vy t
- * z = z0 + vz t
- *
- * let a, b, and c be positions of the single one.
- * a = a0 + va t
- * b = b0 + vb t
- * c = c0 + vc t
- *
- * let ti be the collision time for i = 0, 1, 2, 3 ... N-1
- *
- * x0i + vxi ti = a0 + va ti
- * y0i + vyi ti = b0 + vb ti
- * z0i + vzi ti = c0 + vc ti
- *
- * x0i - a0 = (va - vxi) ti
- * y0i - b0 = (vb - vyi) ti
- *
- * (x0i - a0) (vb - vyi) = (y0i - b0) (va - vxi)
- *
- * x0i vb - x0i vyi - a0 vb + a0 vyi = y0i va - y0i vxi - b0 va + b0 vxi
- *
- * swap i with k, subtract; quadratic terms a0 vb and b0 va
- * drop out
- *
- * (x0i - x0k) vb - x0i vyi + x0k vyk + a0 (vyi - vyk)
- * = (y0i - y0k) va - y0i vxi + y0k vxk + b0 (vxi - vxk)
- *
- * rearrange into linear equation in a0, b0, va, vb
- *
- * a0 (vyi - vyk) + b0 (vxk - vxi) + (y0k - y0i) va + (x0i - x0k) vb
- * = y0k vxk - y0i vxi + x0i vyi - x0k vyk
- *
- * repeat for any four distinct i-k pairs to get four equations
- *
- * solve, then get ti = (x0i - a0) / (va - vxi) for any i
- * now for c, need to solve another 2 x 2 equation
- *
- * c0 + vc ti = z0i + vzi ti
- * c0 + vc tk = z0k + vzk tk
- *
- * c0 tk + vc ti tk = z0i tk + vzi ti tk
- * c0 ti + vc ti tk = z0k ti + vzk ti tk
- *
- * c0 = (z0i tk + vzi ti tk - z0k ti - vzk ti tk) / (tk - ti)
- *
- * for any two i and k. Update: make sure not to pick i = 0123 and k = 1230
+/* Update: make sure not to pick i = 0123 and k = 1230
  * otherwise will only have rank 3. Must have rank 4 to be solvable.
  */
 
@@ -173,6 +109,7 @@ void do_part2(const std::vector<Stone> &things) {
         mat(r, 3) = x0i - x0k;
         vec(r) = one * y0k * vxk - one * y0i * vxi + one * x0i * vyi - one * x0k * vyk;
     }
+    // https://stackoverflow.com/a/1297730/2990344
     permutation_matrix<std::size_t> pm(mat.size1());
     lu_factorize(mat, pm);
     lu_substitute(mat, pm, vec);
