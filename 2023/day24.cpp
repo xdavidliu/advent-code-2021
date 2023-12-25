@@ -10,7 +10,6 @@
 #include <boost/rational.hpp>
 #include <boost/numeric/ublas/matrix.hpp>
 #include <boost/numeric/ublas/vector.hpp>
-#include <boost/numeric/ublas/io.hpp>
 #include <boost/numeric/ublas/lu.hpp>
 
 // in fedora, sudo dnf install boost boost-devel
@@ -87,47 +86,6 @@ void do_part1(const std::vector<Stone> &things) {
     std::cout << "part 1 = " << part1 << '\n';  // 16172
 }
 
-class Collect {
-    std::map<long, std::vector<int>> the_map;
-public:
-    void increment(const long x, int i) {
-        auto [iter, ignore] = the_map.insert({x, std::vector<int>()});
-        iter->second.push_back(i);
-    }
-    void show(std::ofstream &ofs) const {
-        for (const auto &[key, vals]: the_map) {
-            if (vals.size() > 1) {
-                ofs << key << ": ";
-                for (const auto &val : vals) {
-                    ofs << val << ' ';
-                }
-                ofs << '\n';
-            }
-        }
-        ofs << '\n';
-    }
-};
-
-void foo2() {
-    const auto things = parse_file();
-    std::ofstream ofs("/home/employee/Documents/temp/out.txt");
-    Collect c_vx, c_vy, c_vz;
-    for (int i = 0; i < things.size(); ++i) {
-        const auto &a = things[i];
-        c_vx.increment(a.vx, i);
-        c_vy.increment(a.vy, i);
-        c_vz.increment(a.vz, i);
-    }
-    c_vx.show(ofs);
-}
-
-void foo3() {
-    cpp_bin_float_100 x = 209773510765693L;
-    std::cout << std::setprecision(15) << x << '\n';
-    std::cout << std::numeric_limits<cpp_bin_float_100>::max() << '\n';
-    std::cout << sizeof(cpp_bin_float_100) << '\n';
-}
-
 void foo4() {
     // https://www.boost.org/doc/libs/1_82_0/libs/numeric/ublas/doc/matrix.html#matrix
     matrix<cpp_bin_float_100> mat(2, 2);
@@ -145,62 +103,93 @@ void foo4() {
     // https://stackoverflow.com/a/1297730/2990344
 }
 
-void populate_rhs(const std::vector<Stone> &stones, const vector<cpp_bin_float_100> &p, vector<cpp_bin_float_100> &f) {
-    for (int i = 0; i < 3; ++i) {
-        const auto &s = stones[i];
-        f(i * 3) = p(0) - stones[i].x + p(6) * (p(3) - s.vx);
-        f(i * 3 + 1) = p(1) - stones[i].y + p(7) * (p(4) - s.vy);
-        f(i * 3 + 2) = p(2) - stones[i].z + p(8) * (p(5) - s.vz);
-    }
-}
+/*
+ * x = x0 + vx t
+ * y = y0 + vy t
+ * z = z0 + vz t
+ *
+ * let a, b, and c be positions of the single one.
+ * a = a0 + va t
+ * b = b0 + vb t
+ * c = c0 + vc t
+ *
+ * let ti be the collision time for i = 0, 1, 2, 3 ... N-1
+ *
+ * x0i + vxi ti = a0 + va ti
+ * y0i + vyi ti = b0 + vb ti
+ * z0i + vzi ti = c0 + vc ti
+ *
+ * x0i - a0 = (va - vxi) ti
+ * y0i - b0 = (vb - vyi) ti
+ *
+ * (x0i - a0) (vb - vyi) = (y0i - b0) (va - vxi)
+ *
+ * x0i vb - x0i vyi - a0 vb + a0 vyi = y0i va - y0i vxi - b0 va + b0 vxi
+ *
+ * swap i with k, subtract; quadratic terms a0 vb and b0 va
+ * drop out
+ *
+ * (x0i - x0k) vb - x0i vyi + x0k vyk + a0 (vyi - vyk)
+ * = (y0i - y0k) va - y0i vxi + y0k vxk + b0 (vxi - vxk)
+ *
+ * rearrange into linear equation in a0, b0, va, vb
+ *
+ * a0 (vyi - vyk) + b0 (vxk - vxi) + (y0k - y0i) va + (x0i - x0k) vb
+ * = y0k vxk - y0i vxi + x0i vyi - x0k vyk
+ *
+ * repeat for any four distinct i-k pairs to get four equations
+ *
+ * solve, then get ti = (x0i - a0) / (va - vxi) for any i
+ * now for c, need to solve another 2 x 2 equation
+ *
+ * c0 + vc ti = z0i + vzi ti
+ * c0 + vc tk = z0k + vzk tk
+ *
+ * c0 tk + vc ti tk = z0i tk + vzi ti tk
+ * c0 ti + vc ti tk = z0k ti + vzk ti tk
+ *
+ * c0 = (z0i tk + vzi ti tk - z0k ti - vzk ti tk) / (tk - ti)
+ *
+ * for any two i and k. Update: make sure not to pick i = 0123 and k = 1230
+ * otherwise will only have rank 3. Must have rank 4 to be solvable.
+ */
 
-void populate_jacob(const std::vector<Stone> &stones, const vector<cpp_bin_float_100> &p, matrix<cpp_bin_float_100> &j) {
-    for (int i = 0; i < 9; ++i) {
-        for (int k = 0; k < 9; ++k) { j(i, k) = 0; }
+void do_part2(const std::vector<Stone> &things) {
+    // pick whatever, just make sure not the same
+    // oh wow, if you put k_vals = 1, 2, 3, 0; it's actually linearly dependent,
+    // so you get singular. Interesting, but makes sense!
+    std::vector<int> i_vals = {0, 1, 2, 3}, k_vals = {1, 2, 3, 4};
+    // update: probably don't even need oct; bin100 prob good enough. Maybe even double.
+    matrix<cpp_bin_float_100> mat(4, 4);
+    vector<cpp_bin_float_100> vec(4);
+    const cpp_bin_float_100 one = 1;
+    for (int r = 0; r < 4; ++r) {
+        const auto &si = things[i_vals[r]], &sk = things[k_vals[r]];
+        const auto x0i = si.x, y0i = si.y, x0k = sk.x, y0k = sk.y;
+        const auto vxi = si.vx, vyi = si.vy, vxk = sk.vx, vyk = sk.vy;
+        mat(r, 0) = vyi - vyk;
+        mat(r, 1) = vxk - vxi;
+        mat(r, 2) = y0k - y0i;
+        mat(r, 3) = x0i - x0k;
+        vec(r) = one * y0k * vxk - one * y0i * vxi + one * x0i * vyi - one * x0k * vyk;
     }
-    for (int i = 0; i < 3; ++i) {
-        const auto &s = stones[i];
-        const long sv[] = {s.vx, s.vy, s.vz};
-        for (int k = 0; k < 3; ++k) {
-            j(3 * i + k, k) = 1;  // d/dx
-            j(3 * i + k, 3 + k) = p(6 + i);  // d/dv
-            j(3 * i + k, 6 + i) = p(3 + k) - sv[k];  // d/dt
-        }
-    }
-}
-
-auto norm_sq(const vector<cpp_bin_float_100> &p) {
-    cpp_bin_float_100 out = 0;
-    for (const auto &x : p) {
-        out += x * x;
-    }
-    return out;
-}
-
-void do_part2(const std::vector<Stone> &stones) {
-    vector<cpp_bin_float_100> p(9), dp(9), f(9);
-    matrix<cpp_bin_float_100> j(9, 9);
-    // random guess
-    p[0] = 224164924449606L;
-    p[1] = 373280170830371L;
-    p[2] = 280954002548352L;
-    p[3] = 30; p[4] = 12; p[5] = -200;
-    p[6] = 3; p[7] = 8; p[8] = 5;
-    for (int i = 0; i < 50; ++i) {
-        populate_rhs(stones, p, f);
-        std::cout << norm_sq(f) << '\n';
-        populate_jacob(stones, p, j);
-        dp = -f;
-        permutation_matrix<std::size_t> pm(j.size1());
-        lu_factorize(j, pm);
-        lu_substitute(j, pm, dp);
-        p += dp;
-    }
-    // use negative for rhs
+    permutation_matrix<std::size_t> pm(mat.size1());
+    lu_factorize(mat, pm);
+    lu_substitute(mat, pm, vec);
+    const auto a0 = vec(0), b0 = vec(1), va = vec(2), vb = vec(3);
+    // ti = (x0i - a0) / (va - vxi)
+    const auto ti = (things[0].x - a0) / (va - things[0].vx);
+    const auto tk = (things[1].x - a0) / (va - things[1].vx);
+    // (z0i tk + vzi ti tk - z0k ti - vzk ti tk) / (tk - ti)
+    const auto z0i = things[0].z, z0k = things[1].z;
+    const auto vzi = things[0].vz, vzk = things[1].vz;
+    const auto c0 = (z0i * tk + vzi * ti * tk - z0k * ti - vzk * ti * tk) / (tk - ti);
+    std::cout << "part 2 = " << std::setprecision(20) << (a0 + b0 + c0) << '\n';
+    // 600352360036779
 }
 
 int main() {
     const auto things = parse_file();
-    // do_part1(things);
+    do_part1(things);
     do_part2(things);
 }
