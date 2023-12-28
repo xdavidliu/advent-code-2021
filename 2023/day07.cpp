@@ -138,6 +138,6 @@ int main() {
         for (std::size_t i = 0; i < hands.size(); ++i) {
             part2 += (i + 1) * hands[i].bid;
         }
-        std::cout << "part 2 = " << part2 << '\n';  // 249660577 too low
+        std::cout << "part 2 = " << part2 << '\n';  // 249776650
     }
 }
