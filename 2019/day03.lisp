@@ -98,7 +98,6 @@
 	 (between-inclusive (lo-bound s1) p2 (up-bound s1))
 	 (not (and (zerop p1) (zerop p2)))
 	 (funcall *dist-func* s1 s2))))
-;;	 (+ (abs p1) (abs p2)))))
 
 (defun manhattan (s1 s2)
   (+ (abs (pos s1)) (abs (pos s2))))
