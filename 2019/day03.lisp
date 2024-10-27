@@ -1,4 +1,3 @@
-
 ;; from day 2
 (defun pos-or-end (item seq &rest args)
   (or (apply #'position item seq args)
@@ -13,23 +12,29 @@
        (reverse (cons (subseq seq l r) acc)))))
 
 ;; note pos here is 2 el list, pos above is single coord
-(defun segment-and-next (p str)
+;; values are segment, next pos, and next dist
+(defun segment-and-next (p str d)
   (let ((dir (elt str 0))
 	(num (parse-integer (subseq str 1)))
 	(x (car p))
 	(y (cadr p)))
-    (cond ((eql dir #\R)
-	   (values (list 'h y x (+ x num))
-		   (list (+ x num) y)))
-	  ((eql dir #\L)
-	   (values (list 'h y (- x num) x)
-		   (list (- x num) y)))
-	  ((eql dir #\U)
-	   (values (list 'v x y (+ y num))
-		   (list x (+ y num))))
-	  ((eql dir #\D)
-	   (values (list 'v x (- y num) y)
-		   (list x (- y num)))))))
+    (let ((next-d (+ d (abs num))))
+      (cond ((eql dir #\R)
+	     (values (list 'h y x (+ x num) d)
+		     (list (+ x num) y)
+		     next-d))
+	    ((eql dir #\L)
+	     (values (list 'h y x (- x num) d)
+		     (list (- x num) y)
+		     next-d))
+	    ((eql dir #\U)
+	     (values (list 'v x y (+ y num) d)
+		     (list x (+ y num))
+		     next-d))
+	    ((eql dir #\D)
+	     (values (list 'v x y (- y num) d)
+		     (list x (- y num))
+		     next-d))))))
 
 (defun pos (seg)
   (cadr seg))
@@ -40,6 +45,9 @@
 (defun up-bound (seg)
   (cadddr seg))
 
+(defun dist-of (seg)
+  (cadddr (cdr seg))) 
+
 (defun is-horizontal (seg)
   (eq 'h (car seg)))
 
@@ -47,14 +55,14 @@
   (eq 'v (car seg)))
 
 (defun to-segments (strs)
-  (to-segments-help strs (list 0 0) nil))
+  (to-segments-help strs (list 0 0) 0 nil))
 
-(defun to-segments-help (strs p out)
+(defun to-segments-help (strs p d out)
   (if (null strs)
       (nreverse out)
-      (multiple-value-bind (seg next-p)
-	  (segment-and-next p (car strs))
-	(to-segments-help (cdr strs) next-p (cons seg out)))))
+      (multiple-value-bind (seg next-p next-d)
+	  (segment-and-next p (car strs) d)
+	(to-segments-help (cdr strs) next-p next-d (cons seg out)))))
 
 (defun find-inter (horiz vert)
   (let ((out nil))
@@ -78,18 +86,34 @@
 	   (apply 'min (find-inter horiz2 vert1))))))
 
 (defun between-inclusive (a b c)
-  (and (<= a b) (<= b c)))
+  (or (and (<= a b) (<= b c))
+      (and (<= c b) (<= b a))))
+
+(defparameter *dist-func* nil)
 
 (defun intersect-m-dist (s1 s2)
   (let ((p1 (pos s1))
 	(p2 (pos s2)))
-    (and (between-inclusive (lo-bound s2) (pos s1) (up-bound s2))
-	 (between-inclusive (lo-bound s1) (pos s2) (up-bound s1))
-	 (not (and (zerop p1) (zerop p2))) 
-	 (+ (abs p1) (abs p2)))))
+    (and (between-inclusive (lo-bound s2) p1 (up-bound s2))
+	 (between-inclusive (lo-bound s1) p2 (up-bound s1))
+	 (not (and (zerop p1) (zerop p2)))
+	 (funcall *dist-func* s1 s2))))
+;;	 (+ (abs p1) (abs p2)))))
+
+(defun manhattan (s1 s2)
+  (+ (abs (pos s1)) (abs (pos s2))))
+
+(defun path-dist (s1 s2)
+  (+ (dist-of s1) (dist-of s2)
+     (abs (- (pos s2) (lo-bound s1)))
+     (abs (- (pos s1) (lo-bound s2)))))
 
 (with-open-file (strm "~/Documents/input.txt")
   (let* ((line1 (read-line strm))
 	 (line2 (read-line strm)))
-    (format t "part1 = ~A" (solve-str line1 line2))))
+    (let ((*dist-func* 'manhattan))
+      (format t "part1 = ~A~%" (solve-str line1 line2)))
+    (let ((*dist-func* 'path-dist))
+      (format t "part2 = ~A~%" (solve-str line1 line2)))))
 ;; part1 768
+;; part2 8684
