@@ -46,6 +46,7 @@
   (format t "part 1 = ~A" (output vec 12 2)))
 ;; 9581917
 
+;; "Each of the two input values will be between 0 and 99, inclusive."
 (defun part2 ()
   (dotimes (noun 100)
     (dotimes (verb 100)
