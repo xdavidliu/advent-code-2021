@@ -16,6 +16,7 @@
       (coerce (mapcar #'parse-integer toks)
 	      'vector))))
 
+;; hyperspec says CASE uses "same", where "same" is EQL, not EQ, so numbers work.
 (defun from-code (code)
   (case code
     (1 #'+)
