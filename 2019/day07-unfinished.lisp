@@ -120,7 +120,7 @@
 (defvar *phase-ptr*)
 
 (defun change ()
-  (if (= 5 *phase-ptr)
+  (if (= 5 *phase-ptr*)
       (if *continue-looping*
 	  (setf *phase-ptr* 0)
 	  (return-from change nil)))
@@ -155,27 +155,9 @@
 	   (if (not *continue-looping*)
 	       ;; for part 1, reset software between each amp
 	       (setf *ptr* 0)
-	       (setf *code-vector* (copy-seq *input-vec*))))))))
-       
-
-(defun try-phase-setting (setting)
-  (setf *phase-setting* setting)
-  (setf *phase-used* nil)
-  (change))
-
-(defvar *reset-software*)
-
-(defun try-perm ()
-  (setf *input-value* 0)
-  (map nil
-       (lambda (s)
-	 (try-phase-setting s)
-	 (if *reset-software*
-	     (setf *ptr* 0)
-	     (setf *code-vec* (copy-seq *input-vec*))))
-       perm))
-;; interestingly, for part 1 I get same result if I don't copy-seq
-;; in the map here, but I'll do so anyway
+	       ;; interestingly for part 1 it doesn't seem to make a
+	       ;; diffence weather I do copy-seq here or not
+	       (setf *code-vec* (copy-seq *input-vec*))))))))
 
 ;; still need to reset code-vec and *ptr* in between perms, regardless of
 ;; value of *reset-software*, since latter is only in between amps.
@@ -185,17 +167,19 @@
       ((null next-perm-result) best-output)
     (setf *code-vec* (copy-seq *input-vec*))
     (setf *ptr* 0)
-    (try-perm)))
+    (setf *phase-ptr* 0)
+    (setf *input-value* 0)
+    (setf *phase-used* nil)
+    (change)))
 
-(let ((*reset-software* t)
-      (*ptr* 0)
+(let ((*continue-looping* nil)
       (*phase-vec* (vector 0 1 2 3 4)))
   (format t "part 1 = ~A~%" (try-all-perms)))
 ;; 398674
 
-(let ((*reset-software* nil)
-      (*ptr* 0)
-      (*phase-vec* (vector 5 6 7 8 9)))
-  (format t "part 2 = ~A~%" (try-all-perms)))
+;; (let ((*continue-looping* t)
+;;       (*ptr* 0)
+;;       (*phase-vec* (vector 5 6 7 8 9)))
+;;   (format t "part 2 = ~A~%" (try-all-perms)))
 ;; 162 too low
 
