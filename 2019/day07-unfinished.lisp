@@ -31,7 +31,7 @@
     (7 #'less-than)
     (8 #'equal-to)))
 
-(defparameter *input-vec* (read-input "~/Documents/input.txt"))
+(defparameter *input-vec* (read-input "~/Documents/sample.txt"))
 
 ;; above same as day02
 
@@ -112,74 +112,101 @@
 
 ;; ========================
 
-(defvar *ptr*)
-(defvar *code-vec*)
+(defvar *ptr-vec*)
+(defvar vec)
+(defvar *loop*)
 (defvar *phase-used*)
-(defvar *continue-looping*)
-(defvar *phase-vec*)
 (defvar *phase-ptr*)
+(defvar perm)
+(defvar *is-first-pass*)
+
+(defun get-ptr ()
+  (elt *ptr-vec* *phase-ptr*))
+
+(defun inc-ptr (d)
+  (incf (elt *ptr-vec* *phase-ptr*) d))
+
+(defun set-ptr (x)
+  (setf (elt *ptr-vec* *phase-ptr*) x))
+
+(defun vec-val ()
+  (elt vec (get-ptr)))
 
 (defun change ()
-  (if (= 5 *phase-ptr*)
-      (if *continue-looping*
-	  (setf *phase-ptr* 0)
-	  (return-from change nil)))
-  (let ((code (mod (elt *code-vec* *ptr*) 100)))
-    ;; 99 still implicitly terminates
+  (format t "change ~A~%" (vec-val))
+  (let ((code (mod (vec-val) 100)))
     (case code
+      ;; 99 implicitly ends without tail call
       ((1 2 7 8)
-       (change-math (from-code code) *code-vec* *ptr*)
-       (incf *ptr* 4)
+       (change-math (from-code code) vec (get-ptr))
+       (inc-ptr 4)
        (change))
       ((5 6)
-       (setf *ptr* (jump code *code-vec* *ptr*))
+       (set-ptr (jump code vec (get-ptr)))
        (change))
       ((3 4)
        (change-io code)
-       (incf *ptr* 2)
-       (change)))))
+       (when (= 4 code)
+	 (setf *phase-used* nil)
+	 (incf *phase-ptr*)
+	 (when *loop*
+	   (inc-ptr 2)
+	   (when (= 5 *phase-ptr*)
+	     (setf *is-first-pass* nil)
+	     (setf *phase-ptr* 0)))
+	 (when (not *loop*)
+	   ;; may be optional for part 1
+	   (setf vec (copy-seq *input-vec*))
+	   (when (= 5 *phase-ptr*)
+	     (return-from change nil)))
+         (change))
+       (when (/= 4 code)
+	 (inc-ptr 2)
+	 (change))))))
 
 (defun compute-input-value ()
-  (cond ((not *phase-used*)
+  (cond ((and *is-first-pass* (not *phase-used*))
 	 (setf *phase-used* t)
-	 (elt *phase-vec* *phase-ptr*))
+	 (elt perm *phase-ptr*))
 	(t *input-value*)))
 
 (defun change-io (code)
-  (let ((val (elt *code-vec* (1+ *ptr*))))
+  (let ((val (elt vec (1+ (get-ptr)))))
     (case code
-      (3 (setf (elt *code-vec* val) (compute-input-value)))
-      (4 (let ((mode (hundreds (elt *code-vec* *ptr*))))
-	   (setf *input-value* (get-value mode *code-vec* (1+ *ptr*)))
-	   (incf *phase-ptr*)
-	   (if (not *continue-looping*)
-	       ;; for part 1, reset software between each amp
-	       (setf *ptr* 0)
-	       ;; interestingly for part 1 it doesn't seem to make a
-	       ;; diffence weather I do copy-seq here or not
-	       (setf *code-vec* (copy-seq *input-vec*))))))))
+      ;; input always writes, never immediate
+      ;; line below changed in day 7
+      (3 (let ((in-val (compute-input-value)))
+	   (format t "input ~A~%" in-val)
+	   (setf (elt vec val) in-val)))
+      (4 (let ((mode (hundreds (vec-val))))
+	   (setf *input-value* (get-value mode vec (1+ (get-ptr)))))))))
 
-;; still need to reset code-vec and *ptr* in between perms, regardless of
-;; value of *reset-software*, since latter is only in between amps.
+
+;; interestingly, for part 1 I get same result if I don't reset code-vec
+;; in the map here, but I'll do so anyway
+
 (defun try-all-perms ()
   (do ((best-output -1000 (max best-output *input-value*))
-       (next-perm-result t (next-perm *phase-vec*)))
+       (next-perm-result t (next-perm perm)))
       ((null next-perm-result) best-output)
-    (setf *code-vec* (copy-seq *input-vec*))
-    (setf *ptr* 0)
-    (setf *phase-ptr* 0)
     (setf *input-value* 0)
+    (setf *ptr-vec* (vector 0 0 0 0 0))
+    (setf *is-first-pass* t)
+    (setf *phase-ptr* 0)
     (setf *phase-used* nil)
+    (setf vec (copy-seq *input-vec*))
     (change)))
 
-(let ((*continue-looping* nil)
-      (*phase-vec* (vector 0 1 2 3 4)))
-  (format t "part 1 = ~A~%" (try-all-perms)))
+;; (let ((*loop* nil)
+;;       (perm (vector 0 1 2 3 4)))
+;;   (format t "part 1 = ~A~%" (try-all-perms)))
 ;; 398674
 
-;; (let ((*continue-looping* t)
-;;       (*ptr* 0)
-;;       (*phase-vec* (vector 5 6 7 8 9)))
+;; (let ((*loop* t)
+;;       (perm (vector 5 6 7 8 9)))
 ;;   (format t "part 2 = ~A~%" (try-all-perms)))
-;; 162 too low
+;; ;;
 
+(let ((*loop* t)
+      (perm (vector 9 8 7 6 5)))
+  (format t "part 2 = ~A~%" (try-all-perms)))
