@@ -1,7 +1,8 @@
 (load "~/Documents/intcode.lisp")
 (import '(new-computer apply-words run zeroth-val))
 
-(defparameter *input-vec* (read-input "~/Documents/input.txt"))
+(load "~/Documents/util.lisp")
+(defparameter *input-vec* (read-input "~/Documents/input02.txt"))
 
 (let ((cmp (new-computer *input-vec*)))
   (apply-words cmp 12 2)
