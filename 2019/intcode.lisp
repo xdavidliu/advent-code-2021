@@ -15,22 +15,28 @@
 (defstruct computer
   mem ptr input output phase-input)
 
+(defun memget (cmp ptr)
+  (elt (computer-mem cmp) ptr))
+
+(defun memset (cmp ptr val)
+  (setf (elt (computer-mem cmp) ptr) val))
+
 (defun new-computer (input-vec)
   (make-computer :mem (copy-seq input-vec) :ptr 0))
 
 (defun apply-words (cmp noun verb)
-  (setf (elt (computer-mem cmp) 1) noun)
-  (setf (elt (computer-mem cmp) 2) verb))
+  (memset cmp 1 noun)
+  (memset cmp 2 verb))
 
 (defun ptr-val (cmp &optional (off 0))
-  (elt (computer-mem cmp) (+ off (computer-ptr cmp))))  
+  (memget cmp (+ off (computer-ptr cmp))))
 
 (defun zeroth-val (cmp)
-  (elt (computer-mem cmp) 0))
+  (memget cmp 0))
 
 (defun getval-mode (cmp bit val)
   (case bit
-    (0 (elt (computer-mem cmp) val))
+    (0 (memget cmp val))
     (1 val)
     (otherwise (error "getval-mode"))))
 
@@ -48,10 +54,10 @@
 	(right (ptr-val cmp 2))
 	(dest (ptr-val cmp 3))
 	(mem (computer-mem cmp)))
-    (setf (elt mem dest)
-	  (funcall op
-		   (getval-mode cmp bit1 left)
-		   (getval-mode cmp bit2 right)))
+    (memset cmp dest
+	    (funcall op
+		     (getval-mode cmp bit1 left)
+		     (getval-mode cmp bit2 right)))
     (incf (computer-ptr cmp) 4)))
 
 (defun get-input (cmp)
@@ -63,8 +69,7 @@
 
 (defun exec-input (cmp)
   (let ((dest (ptr-val cmp 1)))
-    (setf (elt (computer-mem cmp) dest)
-	  (get-input cmp))
+    (memset cmp dest (get-input cmp))
     (incf (computer-ptr cmp) 2)))
 
 (defun exec-output (cmp)
