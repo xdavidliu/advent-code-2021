@@ -1,6 +1,3 @@
-(load "~/Documents/util.lisp")
-(import '(split read-input))
-
 (defun less-op (a b)
   (if (< a b) 1 0))
 
@@ -16,7 +13,7 @@
     (8 #'equal-op)))
 
 (defstruct computer
-  mem ptr input output)
+  mem ptr input output phase-input)
 
 (defun new-computer (input-vec)
   (make-computer :mem (copy-seq input-vec) :ptr 0))
@@ -57,10 +54,17 @@
 		   (getval-mode cmp bit2 right)))
     (incf (computer-ptr cmp) 4)))
 
+(defun get-input (cmp)
+  (let ((phase (computer-phase-input cmp)))
+    (if phase
+	(progn (setf (computer-phase-input cmp) nil)
+	       phase)
+	(computer-input cmp))))
+
 (defun exec-input (cmp)
   (let ((dest (ptr-val cmp 1)))
     (setf (elt (computer-mem cmp) dest)
-	  (computer-input cmp))
+	  (get-input cmp))
     (incf (computer-ptr cmp) 2)))
 
 (defun exec-output (cmp)
@@ -83,12 +87,14 @@
 
 (defun run-once (cmp)
   (case (get-opcode cmp)
+    (99 (return-from run-once))
     ((1 2 7 8) (exec-op cmp))
     ((5 6) (cond-jump cmp))
     (3 (exec-input cmp))
-    (4 (exec-output cmp))))
+    (4 (exec-output cmp))
+    (t (error "run-once")))
+  t)
 
 (defun run (cmp)
-  (when (not (= 99 (get-opcode cmp)))
-    (run-once cmp)
+  (when (run-once cmp)
     (run cmp)))
