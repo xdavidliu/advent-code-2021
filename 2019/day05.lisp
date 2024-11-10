@@ -1,6 +1,7 @@
 (load "~/Documents/intcode.lisp")
 (import '(new-computer run computer-output))
 
+(load "~/Documents/util.lisp")
 (defparameter *input-vec* (read-input "~/Documents/input05.txt"))
 
 (let ((cmp (new-computer *input-vec*)))
