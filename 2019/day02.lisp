@@ -2,7 +2,7 @@
 (import '(new-computer apply-words run zeroth-val))
 
 (load "~/Documents/util.lisp")
-(defparameter *input-vec* (read-input "~/Documents/input02.txt"))
+(defparameter *input-vec* (read-input "~/Documents/aoc/input02.txt"))
 
 (let ((cmp (new-computer *input-vec*)))
   (apply-words cmp 12 2)
