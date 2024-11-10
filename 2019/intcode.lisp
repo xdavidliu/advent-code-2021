@@ -1,11 +1,19 @@
 (load "~/Documents/util.lisp")
 (import '(split read-input))
 
+(defun less-op (a b)
+  (if (< a b) 1 0))
+
+(defun equal-op (a b)
+  (if (= a b) 1 0))
+
 ;; hyperspec says CASE uses "same", where "same" is EQL, not EQ, so numbers work.
 (defun from-code (code)
   (case code
     (1 #'+)
-    (2 #'*)))
+    (2 #'*)
+    (7 #'less-op)
+    (8 #'equal-op)))
 
 (defstruct computer
   mem ptr input output)
@@ -48,20 +56,34 @@
 
 (defun exec-input (cmp)
   (let ((dest (ptr-val cmp 1)))
-    (setf (elt mem dest)
-	  (computer-input cmp))))
+    (setf (elt (computer-mem cmp) dest)
+	  (computer-input cmp))
+    (incf (computer-ptr cmp) 2)))
 
 (defun exec-output (cmp)
   (let ((bit (get-bit cmp 100))
 	(val (ptr-val cmp 1)))
     (setf (computer-output cmp)
-	  (getval-mode cmp bit val))))
+	  (getval-mode cmp bit val))
+    (incf (computer-ptr cmp) 2)))
+
+(defun cond-jump (cmp opcode)
+  (let* ((bit1 (get-bit cmp 100))
+	 (param (getval-mode cmp bit1 (ptr-val cmp 1))))
+    (if (case opcode
+	  (5 (/= 0 param))
+	  (6 (= 0 param)))
+	(setf (computer-ptr cmp)
+	      (let ((bit2 (get-bit cmp 1000)))
+		(getval-mode cmp bit2 (ptr-val cmp 2))))
+	(incf (computer-ptr cmp) 3))))
 
 (defun run (cmp)
   (let ((opcode (mod (ptr-val cmp) 100)))
     (when (not (= 99 opcode))
       (case opcode
-	((1 2) (exec-op cmp opcode))
+	((1 2 7 8) (exec-op cmp opcode))
+	((5 6) (cond-jump cmp opcode))
 	(3 (exec-input cmp))
 	(4 (exec-output cmp)))
       (run cmp))))
