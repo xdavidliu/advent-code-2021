@@ -40,8 +40,11 @@
 (defun get-bit (cmp place)
   (mod (floor (ptr-val cmp) place) 10))
 
-(defun exec-op (cmp opcode)
-  (let ((op (from-code opcode))
+(defun get-opcode (cmp)
+  (mod (ptr-val cmp) 100))
+
+(defun exec-op (cmp)
+  (let ((op (from-code (get-opcode cmp)))
 	(bit1 (get-bit cmp 100))
 	(bit2 (get-bit cmp 1000))
 	(left (ptr-val cmp 1))
@@ -67,10 +70,10 @@
 	  (getval-mode cmp bit val))
     (incf (computer-ptr cmp) 2)))
 
-(defun cond-jump (cmp opcode)
+(defun cond-jump (cmp)
   (let* ((bit1 (get-bit cmp 100))
 	 (param (getval-mode cmp bit1 (ptr-val cmp 1))))
-    (if (case opcode
+    (if (case (get-opcode cmp)
 	  (5 (/= 0 param))
 	  (6 (= 0 param)))
 	(setf (computer-ptr cmp)
@@ -78,12 +81,14 @@
 		(getval-mode cmp bit2 (ptr-val cmp 2))))
 	(incf (computer-ptr cmp) 3))))
 
+(defun run-once (cmp)
+  (case (get-opcode cmp)
+    ((1 2 7 8) (exec-op cmp))
+    ((5 6) (cond-jump cmp))
+    (3 (exec-input cmp))
+    (4 (exec-output cmp))))
+
 (defun run (cmp)
-  (let ((opcode (mod (ptr-val cmp) 100)))
-    (when (not (= 99 opcode))
-      (case opcode
-	((1 2 7 8) (exec-op cmp opcode))
-	((5 6) (cond-jump cmp opcode))
-	(3 (exec-input cmp))
-	(4 (exec-output cmp)))
-      (run cmp))))
+  (when (not (= 99 (get-opcode cmp)))
+    (run-once cmp)
+    (run cmp)))
