@@ -44,10 +44,6 @@
     (loop-til-end cmps 0)
     (computer-output (elt cmps 4))))
 
-;; hack: need to setf output to nil before calling run-til-output-or-end
-;; we don't want to blow away output at 4 otherwise we don't know answer
-(defparameter *last-known-last-output* nil)
-
 (defun loop-til-end (cmps amp-ptr)
   (when (run-til-output-or-end (elt cmps amp-ptr))
     (let ((next-ptr (mod (1+ amp-ptr) 5)))
