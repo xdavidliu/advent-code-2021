@@ -1,7 +1,7 @@
-(load "~/Documents/intcode.lisp")
+(load "~/Documents/aoc/intcode.lisp")
 (import '(new-computer run-once computer-input computer-output))
 
-(load "~/Documents/util.lisp")
+(load "~/Documents/aoc/util.lisp")
 (defparameter *input-vec* (read-input "~/Documents/aoc/input07.txt"))
 
 (defun nc (phase)
