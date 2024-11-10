@@ -1,0 +1,17 @@
+(defun pos-or-end (item seq &rest args)
+  (or (apply #'position item seq args)
+      (length seq)))
+
+(defun split (seq delim)
+  (do ((l 0 (1+ r))
+       (r (pos-or-end delim seq)
+	  (pos-or-end delim seq :start (1+ r)))
+       (acc nil (cons (subseq seq l r) acc)))
+      ((= r (length seq))
+       (reverse (cons (subseq seq l r) acc)))))
+
+(defun read-input (fname)
+  (with-open-file (strm fname)
+    (let ((toks (split (read-line strm) #\,)))
+      (coerce (mapcar #'parse-integer toks)
+	      'vector))))
