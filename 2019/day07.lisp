@@ -2,7 +2,7 @@
 (import '(new-computer run-once computer-input computer-output))
 
 (load "~/Documents/util.lisp")
-(defparameter *input-vec* (read-input "~/Documents/input07.txt"))
+(defparameter *input-vec* (read-input "~/Documents/aoc/input07.txt"))
 
 (defun nc (phase)
   (let ((cmp (new-computer *input-vec*)))
