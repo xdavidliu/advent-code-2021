@@ -13,16 +13,25 @@
     (8 #'equal-op)))
 
 (defstruct computer
-  mem ptr input output phase-input)
+  mem memtable ptr input output phase-input base)
+
+(defun get-or-zero (key table)
+  (let ((gotten (gethash key table)))
+    (or gotten 0)))
 
 (defun memget (cmp ptr)
-  (elt (computer-mem cmp) ptr))
+  (if (< ptr (length (computer-mem cmp)))
+      (elt (computer-mem cmp) ptr)
+      (get-or-zero ptr (computer-memtable cmp))))
 
 (defun memset (cmp ptr val)
-  (setf (elt (computer-mem cmp) ptr) val))
+  (if (< ptr (length (computer-mem cmp)))
+      (setf (elt (computer-mem cmp) ptr) val)
+      (setf (gethash ptr (computer-memtable cmp)) val)))
 
 (defun new-computer (input-vec)
-  (make-computer :mem (copy-seq input-vec) :ptr 0))
+  (make-computer :mem (copy-seq input-vec) :ptr 0
+		 :memtable (make-hash-table) :base 0))
 
 (defun apply-words (cmp noun verb)
   (memset cmp 1 noun)
@@ -34,13 +43,20 @@
 (defun zeroth-val (cmp)
   (memget cmp 0))
 
-(defun getval-mode (cmp bit val)
-  (case bit
+(defun getval-mode (cmp mode val)
+  (case mode
     (0 (memget cmp val))
     (1 val)
+    (2 (memget cmp (+ val (computer-base cmp))))
     (otherwise (error "getval-mode"))))
 
-(defun get-bit (cmp place)
+(defun setval-mode (cmp mode dest val)
+  (case mode
+    (0 (memset cmp dest val))
+    (2 (memset cmp (+ dest (computer-base cmp)) val))
+    (otherwise (error "setval-mode"))))
+
+(defun get-mode (cmp place)
   (mod (floor (ptr-val cmp) place) 10))
 
 (defun get-opcode (cmp)
@@ -48,16 +64,17 @@
 
 (defun exec-op (cmp)
   (let ((op (from-code (get-opcode cmp)))
-	(bit1 (get-bit cmp 100))
-	(bit2 (get-bit cmp 1000))
+	(mode1 (get-mode cmp 100))
+	(mode2 (get-mode cmp 1000))
+	(mode3 (get-mode cmp 10000))
 	(left (ptr-val cmp 1))
 	(right (ptr-val cmp 2))
 	(dest (ptr-val cmp 3))
 	(mem (computer-mem cmp)))
-    (memset cmp dest
-	    (funcall op
-		     (getval-mode cmp bit1 left)
-		     (getval-mode cmp bit2 right)))
+    (let ((result (funcall op
+			   (getval-mode cmp mode1 left)
+			   (getval-mode cmp mode2 right))))
+      (setval-mode cmp mode3 dest result))
     (incf (computer-ptr cmp) 4)))
 
 (defun get-input (cmp)
@@ -68,26 +85,34 @@
 	(computer-input cmp))))
 
 (defun exec-input (cmp)
-  (let ((dest (ptr-val cmp 1)))
-    (memset cmp dest (get-input cmp))
+  (let ((dest (ptr-val cmp 1))
+	(mode (get-mode cmp 100)))
+    (setval-mode cmp mode dest (get-input cmp))
     (incf (computer-ptr cmp) 2)))
 
 (defun exec-output (cmp)
-  (let ((bit (get-bit cmp 100))
+  (let ((mode (get-mode cmp 100))
 	(val (ptr-val cmp 1)))
     (setf (computer-output cmp)
-	  (getval-mode cmp bit val))
+	  (getval-mode cmp mode val))
+    (incf (computer-ptr cmp) 2)))
+
+(defun adjust-base (cmp)
+  (let ((mode (get-mode cmp 100))
+	(val (ptr-val cmp 1)))
+    (incf (computer-base cmp)
+	  (getval-mode cmp mode val))
     (incf (computer-ptr cmp) 2)))
 
 (defun cond-jump (cmp)
-  (let* ((bit1 (get-bit cmp 100))
-	 (param (getval-mode cmp bit1 (ptr-val cmp 1))))
+  (let* ((mode1 (get-mode cmp 100))
+	 (param (getval-mode cmp mode1 (ptr-val cmp 1))))
     (if (case (get-opcode cmp)
 	  (5 (/= 0 param))
 	  (6 (= 0 param)))
 	(setf (computer-ptr cmp)
-	      (let ((bit2 (get-bit cmp 1000)))
-		(getval-mode cmp bit2 (ptr-val cmp 2))))
+	      (let ((mode2 (get-mode cmp 1000)))
+		(getval-mode cmp mode2 (ptr-val cmp 2))))
 	(incf (computer-ptr cmp) 3))))
 
 (defun run-once (cmp)
@@ -97,6 +122,7 @@
     ((5 6) (cond-jump cmp))
     (3 (exec-input cmp))
     (4 (exec-output cmp))
+    (9 (adjust-base cmp))
     (t (error "run-once")))
   t)
 
