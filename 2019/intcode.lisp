@@ -126,6 +126,13 @@
     (t (error "run-once")))
   t)
 
+(defun run-til-output-or-end (cmp)
+  (let ((opcode (get-opcode cmp)))
+    (cond ((= 99 opcode) nil)
+	  ((= 4 opcode) (run-once cmp) t)
+	  (t (run-once cmp)
+	     (run-til-output-or-end cmp)))))
+
 (defun run (cmp)
   (when (run-once cmp)
     (run cmp)))
