@@ -9,13 +9,6 @@
     (setf (computer-phase-input cmp) phase)
     cmp))
 
-(defun run-til-output-or-end (cmp)
-  (let ((opcode (get-opcode cmp)))
-    (cond ((= 99 opcode) nil)
-	  ((= 4 opcode) (run-once cmp) t)
-	  (t (run-once cmp)
-	     (run-til-output-or-end cmp)))))
-
 (defun try-perm (a b c d e)
   (let ((cmps (list (nc a) (nc b) (nc c) (nc d) (nc e))))
     (setf (computer-input (elt cmps 0)) 0)
