@@ -39,17 +39,18 @@
 ;; can't use :initial-element for grid itself because then I think it
 ;; sets the same string object for each row
 
-(defun draw (table)
+(defun draw (table init &optional (rev nil))
   (multiple-value-bind (min-x max-x min-y max-y)
       (get-bounds table)
     (let ((grid (make-black-grid (1+ (- max-x min-x))
 				 (1+ (- max-y min-y))
-				 #\.)))
+				 init)))
       (maphash (lambda (k v)
 		 (let ((k (- (car k) min-x))
 		       (i (- max-y (cadr k))))
 		   (setf (elt (elt grid i) k) v)))
 	       table)
+      (when rev (nreverse grid))
       (map nil (lambda (line) (format t "~A~%" line)) grid))))
 
 ;; permutations functions
