@@ -16,6 +16,42 @@
       (coerce (mapcar #'parse-integer toks)
 	      'vector))))
 
+(defparameter *huge* 10000000000000)
+
+(defun get-bounds (table)
+  (let ((min-x *huge*) (max-x (- *huge*))
+	(min-y *huge*) (max-y (- *huge*)))
+    (maphash (lambda (k v)
+	       (declare (ignore v))
+	       (let ((x (car k)) (y (cadr k)))
+		 (setf min-x (min x min-x)
+		       max-x (max x max-x)
+		       min-y (min y min-y)
+		       max-y (max y max-y))))
+	     table)
+    (values min-x max-x min-y max-y)))
+
+(defun make-black-grid (width height init)
+  (let ((grid (make-array height)))
+    (dotimes (i height)
+      (setf (elt grid i) (make-string width :initial-element init)))
+    grid))
+;; can't use :initial-element for grid itself because then I think it
+;; sets the same string object for each row
+
+(defun draw (table)
+  (multiple-value-bind (min-x max-x min-y max-y)
+      (get-bounds table)
+    (let ((grid (make-black-grid (1+ (- max-x min-x))
+				 (1+ (- max-y min-y))
+				 #\.)))
+      (maphash (lambda (k v)
+		 (let ((k (- (car k) min-x))
+		       (i (- max-y (cadr k))))
+		   (setf (elt (elt grid i) k) v)))
+	       table)
+      (map nil (lambda (line) (format t "~A~%" line)) grid))))
+
 ;; permutations functions
 
 ;; assumes vec elems unique
