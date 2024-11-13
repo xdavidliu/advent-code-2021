@@ -23,7 +23,7 @@
     (setf (gethash pos (robot-painted rb)) t)
     (case out
       (0 (remhash pos (robot-whites rb)))
-      (1 (setf (gethash pos (robot-whites rb)) t)))))
+      (1 (setf (gethash pos (robot-whites rb)) #\#)))))
 
 (defun turn-dir (rb)
   (let ((out (computer-output (robot-cmp rb)))
@@ -52,42 +52,6 @@
       (move-forward rb)
       (run-robot rb))))
 
-(defparameter *huge* 100000000000)
-
-(defun get-bounds (table)
-  (let ((min-x *huge*) (max-x (- *huge*))
-	(min-y *huge*) (max-y (- *huge*)))
-    (maphash (lambda (k v)
-	       (declare (ignore v))
-	       (let ((x (car k)) (y (cadr k)))
-		 (setf min-x (min x min-x)
-		       max-x (max x max-x)
-		       min-y (min y min-y)
-		       max-y (max y max-y))))
-	     table)
-    (values min-x max-x min-y max-y)))
-
-(defun make-black-grid (width height)
-  (let ((grid (make-array height)))
-    (dotimes (i height)
-      (setf (elt grid i) (make-string width :initial-element #\.)))
-    grid))
-;; can't use :initial-element for grid itself because then I think it
-;; sets the same string object for each row
-
-(defun draw (table)
-  (multiple-value-bind (min-x max-x min-y max-y)
-      (get-bounds table)
-    (let ((grid (make-black-grid (1+ (- max-x min-x))
-				 (1+ (- max-y min-y)))))
-      (maphash (lambda (k v)
-		 (declare (ignore v))
-		 (let ((k (- (car k) min-x))
-		       (i (- max-y (cadr k))))
-		   (setf (elt (elt grid i) k) #\#)))
-	       table)
-      (map nil (lambda (line) (format t "~A~%" line)) grid))))
-
 (let ((rb (new-robot *input-vec*)))
   (run-robot rb)
   (format t "part 1 = ~A~%" (hash-table-count (robot-painted rb))))
@@ -95,7 +59,7 @@
 
 (let ((rb (new-robot *input-vec*)))
   (setf (computer-input (robot-cmp rb)) 1)
-  (setf (gethash (list 0 0) (robot-whites rb)) t)
+  (setf (gethash (list 0 0) (robot-whites rb)) #\#)
   (run-robot rb)
   (draw (robot-whites rb)))
 ;; CEPKZJCR
