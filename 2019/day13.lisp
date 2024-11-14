@@ -19,8 +19,6 @@
 	  (t (run-once cmp)
 	     (run-til-io-or-end cmp)))))
 
-(defparameter *paddle-y* nil)
-
 (defun hack-last-output-mem (cmp)
   (let* ((output-op (memget cmp (- (computer-ptr cmp) 2)))
 	 (mode (floor output-op 100))
@@ -28,7 +26,7 @@
     (setval-mode cmp mode dest 1)))
 
 (defun run-game (cmp tiles in-vals &key (draw-each nil) mem0-val
-				     print-block-count paddle-wall-hack)
+				     print-block-count)
   (when mem0-val (memset cmp 0 mem0-val))
   (setf (computer-input cmp) (car in-vals))
   (let ((out-vals (list 0 0 0))
@@ -43,10 +41,8 @@
 	 (setf (elt out-vals out-pos) (computer-output cmp)
 	       out-pos (mod (1+ out-pos) 3))
 	 (when (= 0 out-pos)
-	   (case (elt out-vals 2)
-	     (2 (incf block-count))
-	     (3 (when (null *paddle-y*)
-		  (setf *paddle-y* (elt out-vals 1)))))
+	   (when (= 2 (elt out-vals 2))
+	     (incf block-count))
 	   (let ((xy (list (elt out-vals 0) (elt out-vals 1))))
 	     (if (equal xy (list -1 0))
 		 (when (and (> broken-count 0) (= block-count broken-count))
@@ -56,11 +52,6 @@
 		       (e2 (elt out-vals 2)))
 		   (when (and gh (eql gh #\B) (= e2 0))
 		     (incf broken-count))
-		   (when (and paddle-wall-hack
-			      (= *paddle-y* (elt out-vals 1))
-			      (/= e2 4))
-		     (setf e2 1)
-		     (hack-last-output-mem cmp))
 		   (setf (gethash xy tiles) (tile-char e2)))))
 	   (when draw-each (draw-game tiles))))
 	(otherwise  ; not nil: https://stackoverflow.com/questions/6098087
@@ -68,8 +59,14 @@
 	   (format t "part 1 = ~A~%" block-count))
 	 (return-from run-game))))))
 
-;; note paddle wall hack does not need to worry about drawing ball there
-;; because ball will always bounce
+(defun hack-paddle-row-into-wall (cmp)
+  (let* ((vec (computer-mem cmp))
+	 (loc (search '(0 3 0) (computer-mem cmp)))
+	 (left (position 1 vec :from-end t :end loc))
+	 (right (position 1 vec :start loc)))
+    (do ((i (1+ left) (1+ i)))
+	((= i right))
+      (setf (elt vec i) 1))))
 
 (defun circ-zeros ()
   (let ((out (list 0)))
@@ -83,4 +80,6 @@
 
 (let ((cmp (new-computer *input-vec*))
       (tiles (make-hash-table :test 'equal)))
-  (run-game cmp tiles (circ-zeros) :draw-each t :mem0-val 2 :paddle-wall-hack t))
+  (hack-paddle-row-into-wall cmp)
+  (run-game cmp tiles (circ-zeros) :draw-each nil :mem0-val 2))
+;; 13140
