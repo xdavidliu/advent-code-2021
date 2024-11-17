@@ -1,9 +1,11 @@
 (defun split (delim text)
-  (do ((i 0) (acc nil)) (nil)
-    (let ((r (search delim text :start2 i)))
-      (cond (r (push (subseq text i r) acc)
-	       (setf i (+ r (length delim))))
-	    (t (return-from split (nreverse (cons (subseq text i) acc))))))))
+  (labels ((rec (i acc)
+	     (let ((r (search delim text :start2 i)))
+	       (if r
+		   (rec (+ r (length delim))
+			(cons (subseq text i r) acc))
+		   (nreverse (cons (subseq text i) acc))))))
+    (rec 0 nil)))
 
 (defun read-input (fname)
   (with-open-file (strm fname)
