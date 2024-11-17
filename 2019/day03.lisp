@@ -1,15 +1,4 @@
-;; from day 2
-(defun pos-or-end (item seq &rest args)
-  (or (apply #'position item seq args)
-      (length seq)))
-
-(defun split (seq delim)
-  (do ((l 0 (1+ r))
-       (r (pos-or-end delim seq)
-	  (pos-or-end delim seq :start (1+ r)))
-       (acc nil (cons (subseq seq l r) acc)))
-      ((= r (length seq))
-       (reverse (cons (subseq seq l r) acc)))))
+(load "~/Documents/aoc/util.lisp")
 
 ;; note pos here is 2 el list, pos above is single coord
 ;; values are segment, next pos, and next dist
@@ -72,8 +61,8 @@
 	  (if x (push x out)))))))
 
 (defun solve-str (str1 str2)
-  (solve (split str1 #\,)
-	 (split str2 #\,)))
+  (solve (split "," str1)
+	 (split "," str2)))
 
 (defun solve (strs1 strs2)
   (let ((segs1 (to-segments strs1))
@@ -107,7 +96,7 @@
      (abs (- (pos s2) (lo-bound s1)))
      (abs (- (pos s1) (lo-bound s2)))))
 
-(with-open-file (strm "~/Documents/input.txt")
+(with-open-file (strm "~/Documents/aoc/input03.txt")
   (let* ((line1 (read-line strm))
 	 (line2 (read-line strm)))
     (let ((*dist-func* 'manhattan))
