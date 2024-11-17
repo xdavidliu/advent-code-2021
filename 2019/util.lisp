@@ -50,7 +50,7 @@
 		       (i (- max-y (cadr k))))
 		   (setf (elt (elt grid i) k) v)))
 	       table)
-      (when rev (nreverse grid))
+      (when rev (setf grid (nreverse grid)))
       (map nil (lambda (line) (format t "~A~%" line)) grid))))
 
 ;; permutations functions
