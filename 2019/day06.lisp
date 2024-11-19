@@ -1,3 +1,5 @@
+(load "~/Documents/aoc/util.lisp")
+
 (defun split-orbit (line)
   (let ((p (position #\) line)))
     (values (subseq line 0 p) (subseq line (1+ p)))))
@@ -52,28 +54,6 @@
 	       (push v (gethash k two-adj)))
 	     one-adj)
     two-adj))
-
-(defun make-queue ()
-  (cons nil nil))
-
-(defun enqueue (q x)
-  (push x (car q)))
-
-(defun dequeue (q)
-  (if (null (cdr q))
-      (do ()
-	  ((null (car q)))
-	(push (pop (car q)) (cdr q))))
-  (pop (cdr q)))
-
-(defun queue-empty (q)
-  (and (null (car q))
-       (null (cdr q))))
-
-(defun make-singleton-queue (elem)
-  (let ((q (make-queue)))
-    (enqueue q elem)
-    q))
 
 (defun bfs (two-adj src dest)
   (do ((q (make-singleton-queue (cons src 0)))
