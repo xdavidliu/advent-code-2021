@@ -69,8 +69,7 @@
 	(mode3 (get-mode cmp 10000))
 	(left (ptr-val cmp 1))
 	(right (ptr-val cmp 2))
-	(dest (ptr-val cmp 3))
-	(mem (computer-mem cmp)))
+	(dest (ptr-val cmp 3)))
     (let ((result (funcall op
 			   (getval-mode cmp mode1 left)
 			   (getval-mode cmp mode2 right))))
