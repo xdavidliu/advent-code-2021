@@ -132,6 +132,14 @@
 	  (t (run-once cmp)
 	     (run-til-output-or-end cmp)))))
 
+(defun run-til-io-or-end (cmp)
+  (let ((opcode (get-opcode cmp)))
+    (cond ((= 99 opcode) nil)
+	  ((= 4 opcode) (run-once cmp) 'out)
+	  ((= 3 opcode) (run-once cmp) 'in)
+	  (t (run-once cmp)
+	     (run-til-io-or-end cmp)))))
+
 (defun run (cmp)
   (when (run-once cmp)
     (run cmp)))
