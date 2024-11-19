@@ -11,14 +11,6 @@
 (defun draw-game (tiles)
   (draw tiles #\  t))  ;; t is for invert y axis
 
-(defun run-til-io-or-end (cmp)
-  (let ((opcode (get-opcode cmp)))
-    (cond ((= 99 opcode) nil)
-	  ((= 4 opcode) (run-once cmp) 'out)
-	  ((= 3 opcode) (run-once cmp) 'in)
-	  (t (run-once cmp)
-	     (run-til-io-or-end cmp)))))
-
 (defun hack-last-output-mem (cmp)
   (let* ((output-op (memget cmp (- (computer-ptr cmp) 2)))
 	 (mode (floor output-op 100))
