@@ -86,3 +86,27 @@
 	   (swap-vec-elem vec (1- bi) si)
 	   (reverse-from vec bi)
 	   t))))
+
+;; queue functions
+
+(defun make-queue ()
+  (cons nil nil))
+
+(defun enqueue (q x)
+  (push x (car q)))
+
+(defun dequeue (q)
+  (if (null (cdr q))
+      (do ()
+	  ((null (car q)))
+	(push (pop (car q)) (cdr q))))
+  (pop (cdr q)))
+
+(defun queue-empty (q)
+  (and (null (car q))
+       (null (cdr q))))
+
+(defun make-singleton-queue (elem)
+  (let ((q (make-queue)))
+    (enqueue q elem)
+    q))
