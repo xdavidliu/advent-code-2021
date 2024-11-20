@@ -129,9 +129,6 @@
 ;; C: #\L 8 #\L 8 #\R 10 #\R 4
 ;; A B A B A C B C A C
 
-;; digit-codes
-;; reverse
-
 (defun digit-code (n)
   (char-code (digit-char n)))
 
@@ -157,9 +154,7 @@
 			         acc)))))))
     (cdr (rec lst nil))))
 ;; cdr is to skip the first comma
-;; wait it's reversed, so two cases of routine-codes should have comma after
 
-;; todo: extra 10 newline at end of main
 (defun part2-input ()
   (let ((a-list '(#\R 4 #\L 10 #\L 10))
 	(b-list '(#\L 8 #\R 12 #\R 10 #\R 4))
