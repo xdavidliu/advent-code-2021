@@ -1,8 +1,4 @@
-(defun read-some-lines (filename)
-  (with-open-file (strm filename)
-    (do ((line (read-line strm nil) (read-line strm nil))
-	 (acc nil (cons line acc)))
-	((null line) (nreverse acc)))))
+(load "~/Documents/aoc/util.lisp")
 
 (defparameter *grid* (read-some-lines "~/Documents/aoc/input10.txt"))
 
