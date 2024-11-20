@@ -5,10 +5,7 @@
     (values (subseq line 0 p) (subseq line (1+ p)))))
 
 (defun read-adj (filename)
-  (with-open-file (strm filename)
-    (do ((line (read-line strm nil) (read-line strm nil))
-	 (acc nil (cons line acc)))
-	((null line) (make-adj acc)))))
+  (make-adj (read-some-lines filename)))
 
 ;; one only has one child, never more than one
 ;; so it's not really a tree
@@ -32,7 +29,7 @@
 		(setf (gethash key desc-count) total)
 		total))))))
 
-(defparameter *adj* (read-adj "~/Documents/input.txt"))
+(defparameter *adj* (read-adj "~/Documents/aoc/input06.txt"))
 
 (let ((desc-count (make-hash-table :test 'equal)))
   (maphash (lambda (k v)
