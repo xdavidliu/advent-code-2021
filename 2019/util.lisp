@@ -13,6 +13,12 @@
       (coerce (mapcar #'parse-integer toks)
 	      'vector))))
 
+(defun read-some-lines (filename)
+  (with-open-file (strm filename)
+    (do ((line (read-line strm nil) (read-line strm nil))
+	 (acc nil (cons line acc)))
+	((null line) (nreverse acc)))))
+
 (defparameter *huge* 10000000000000)
 
 (defun get-bounds (table)
