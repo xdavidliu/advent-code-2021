@@ -1,0 +1,36 @@
+(load "~/Documents/aoc/util.lisp")
+(load "~/Documents/aoc/intcode.lisp")
+
+(defun get-beam-state (x y)
+  (let ((cmp (new-computer *input-vec*)))
+    (setf (computer-input cmp) x)
+    (run-til-io-or-end cmp)
+    (setf (computer-input cmp) y)
+    (run-til-output-or-end cmp)
+    (computer-output cmp)))
+
+(defparameter *input-vec* (read-input "~/Documents/aoc/input19.txt"))
+
+(let ((count 0))
+  (dotimes (y 50)
+    (dotimes (x 50)
+      (let ((cmp (new-computer *input-vec*)))
+	(when (= 1 (get-beam-state x y))
+	  (incf count)))))
+  (format t "part 1 = ~A~%" count))
+;; 211
+
+(defun part2 ()
+  (do ((x 20) (y 23 (1+ y)))
+      (nil)
+    (when (zerop (get-beam-state x y))
+      (format t "~A ~A~%" x y)
+      (error "unexpected"))
+    (do () ((zerop (get-beam-state (1+ x) y)))
+      (incf x))
+    (when (and (>= x 99)
+	       (= 1 (get-beam-state (- x 99) y))
+	       (= 1 (get-beam-state (- x 99) (+ 99 y))))
+      (format t "part 2 = ~A~%" (+ y (* 10000 (- x 99))))
+      (return-from part2))))
+;; 8071006
