@@ -73,14 +73,6 @@
 	(bfs grid (car pos-lett) (cadr pos-lett) pair-table)))
     pair-table))
 
-(defun debug-table (tab)
-  (maphash (lambda (k v)
-	     (format t "~A : ~A~%" k v))
-	   tab))
-
-(defun debug-grid (grid)
-  (map nil (lambda (r) (format t "~A~%" r)) grid))
-
 (defstruct min-heap
   (before #'<=)
   (arr (make-array 1 :adjustable t :fill-pointer 0)))
