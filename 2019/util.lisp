@@ -19,6 +19,14 @@
 	 (acc nil (cons line acc)))
 	((null line) (nreverse acc)))))
 
+(defun debug-table (tab)
+  (maphash (lambda (k v)
+	     (format t "~A : ~A~%" k v))
+	   tab))
+
+(defun debug-grid (grid)
+  (map nil (lambda (r) (format t "~A~%" r)) grid))
+
 (defparameter *huge* 10000000000000)
 
 (defun get-bounds (table)
