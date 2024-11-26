@@ -1,16 +1,5 @@
 (load "~/Documents/aoc/util.lisp")
 
-(defun read-all-lines (filename)
-  (with-open-file (strm filename)
-    (do* ((r t (read-line strm nil))
-	  (acc nil (cons r acc)))
-	 ((null r) (nreverse (cdr acc))))))
-;; - t in (r t ...) not consed: do* -> cons only after read-line
-;; - cdr acc because last r is nil and is consed
-
-(defun list-to-vector (lst)
-  (coerce lst 'vector))
-
 (defun position-table (grid)
   (let ((tab (make-hash-table)))
     (dotimes (r (length grid))
@@ -225,7 +214,8 @@
     out))
 
 (defun part1 ()
-  (let* ((grid (list-to-vector (read-all-lines "~/Documents/aoc/input18.txt")))
+  (let* ((grid (coerce (read-some-lines
+			"~/Documents/aoc/input18.txt") 'vector))
 	 (regions (all-region-zero grid))
 	 (pair-table (compute-pair-table grid)))
     (format t "part 1 = ~A~%" (solve pair-table regions 1))))
@@ -267,7 +257,8 @@
 	(setf (elt (elt grid r) c) #\@)))))
 
 (defun part2 ()
-  (let* ((grid (list-to-vector (read-all-lines "~/Documents/aoc/input18.txt")))
+  (let* ((grid (coerce (read-some-lines
+			"~/Documents/aoc/input18.txt") 'vector))
 	 (pair-table)
 	 (regions (quadrant-regions grid)))
     (divide-quadrants grid)
