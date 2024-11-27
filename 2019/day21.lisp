@@ -20,34 +20,39 @@
 	(out (push (computer-output cmp) outs))))))
 
 #|
-(run "WALK
-")
 
-shows that one hole is ##.##
+W where it jumped
+V where it should have jumped
 
-(run "NOT A J
-WALK
-")
+   WV
+#####...####..###
+    ABCDEFGHIJ
 
-##.#..###
 
-(run "NOT B J
-AND A J
-WALK
-")
+#####.###########    not A
+#####...#########
 
-###...##
+  VABCDEFGH
+#####.#..########    A (not C) D H
+#####.#.#########
+   
+    V
+#####.#.##...####
+    ABCDEFGHI
 
-Solution:
+   V
+#####..#.########
+    ABCDEFG
 
-V
-#...#        
+   VW  V   V
+#####.##.#.#.####   not B  not E not G
+    ABCDEFGHI
 
-V   V
-###.#..#        (D and (not C)) or (not A)
+alternatively, try
+not B and D
 
-V   V
-###.#.#
+works!
+
 
 |#
 
@@ -60,3 +65,16 @@ OR T J
 WALK
 "))
 ;; 19354818
+
+(format t "part 2 = ~A~%" (run "NOT C T
+AND A T
+AND D T
+AND H T
+NOT B J
+AND D J
+OR T J
+NOT A T
+OR T J
+RUN
+"))
+;; 1143787220
