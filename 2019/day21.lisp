@@ -58,7 +58,8 @@ works!
 
 
 
-(format t "part 1 = ~A~%" (run "NOT C T
+(format t "part 1 = ~A~%" (run
+"NOT C T
 AND D T
 NOT A J
 OR T J
@@ -66,7 +67,8 @@ WALK
 "))
 ;; 19354818
 
-(format t "part 2 = ~A~%" (run "NOT C T
+(format t "part 2 = ~A~%" (run
+"NOT C T
 AND A T
 AND D T
 AND H T
