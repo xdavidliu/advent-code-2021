@@ -1,8 +1,5 @@
 (load "~/Documents/aoc/util.lisp")
 
-;; wait, for part 1 you don't have to do all the cards
-;; you just follow one card and ask what the position
-
 (defun last-token-int (text)
   (let ((last-space (position #\  text :from-end t)))
     (and last-space
