@@ -1,59 +1,44 @@
-#include <vector>
-#include <iostream>
-#include <string>
-#include <sstream>
-#include <iterator>
-#include <algorithm>
-#include <map>
-#include <utility>
 
-std::string vec2str(const std::vector<int> &vec) {
-    std::ostringstream oss;
-    std::ostream_iterator<int> oit(oss, " ");
-    std::copy(vec.begin(), vec.end(), oit);
-    return oss.str();
-}
-
-int ind_max(const std::vector<int> &vec) {
-    int i = 0;
-    for (int k = 1; k < vec.size(); ++k) {
-        if (vec[k] > vec[i]) {
-            i = k;
+fun findFirstMax(arr: IntArray): Pair<Int, Int> {
+    var m = Int.MIN_VALUE
+    var i = -1
+    for ((k, x) in arr.withIndex()) {
+        if (x > m) {
+            m = x
+            i = k
         }
     }
-    return i;
+    return Pair(i, m)
 }
 
-void run_step(std::vector<int> &vec) {
-    int i = ind_max(vec);
-    int val = vec[i];
-    vec[i] = 0;
-    while (val) {
-        i = (i + 1) % vec.size();
-        --val;
-        ++vec[i];
+fun cycleOnce(arr: IntArray) {
+    var (i, m) = findFirstMax(arr)
+    arr[i] = 0
+    fun next(k: Int) = (k + 1) % arr.size
+    i = next(i)
+    while (m > 0) {
+        ++arr[i]
+        --m
+        i = next(i)
     }
 }
 
-std::pair<int, int> solve(std::vector<int> &vec) {
-    std::map<std::string, int> seen;
-    seen[vec2str(vec)] = 0;
-    int steps = 0;
+fun solve(arr: IntArray): Pair<Int, Int> {
+    val seen = mutableSetOf(arr.toList())
+    val seenAfter = mutableMapOf(Pair(arr.toList(), 0))
+    var ops = 0
     while (true) {
-        run_step(vec);
-        ++steps;
-        auto s = vec2str(vec);
-        auto f = seen.find(s);
-        if (f != seen.end()) {
-            return std::make_pair(steps, f->second);
+        cycleOnce(arr)
+        ++ops
+        seenAfter.put(arr.toList(), ops)?.let {
+            return Pair(it, ops)
         }
-        seen[s] = steps;
     }
 }
 
-int main(void) {
-    std::vector<int> vec{14,0,15,12,11,11,3,5,1,6,8,4,9,1,8,4};
-    auto sol = solve(vec);
-    std::cout << "part 1 = " << sol.first << "\npart 2 = "
-    << (sol.first - sol.second) << '\n';
+fun main() {
+    val arr = intArrayOf(14,0,15,12,11,11,3,5,1,6,8,4,9,1,8,4)
+    val (a, b) = solve(arr)
+    println("part 1 = $b")  // 11137
+    println("part 2 = ${b - a}")  // 1037
 }
