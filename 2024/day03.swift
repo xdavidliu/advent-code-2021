@@ -1,5 +1,3 @@
-import Foundation
-
 let doRe = /do\(\)|don't\(\)|mul\((\d{1,3}),(\d{1,3})\)/
 func computeDoTotal(_ text: String, ignoreDo: Bool) -> Int {
     var total = 0
@@ -16,17 +14,7 @@ func computeDoTotal(_ text: String, ignoreDo: Bool) -> Int {
     return total
 }
 
-func getLines(_ fileName: String) -> [String] {
-    do {
-        let url = URL(fileURLWithPath: fileName)
-        let text = try String(contentsOf: url, encoding: .utf8)
-        return text.split(separator: "\n").map(String.init)
-    } catch {
-        return []
-    }
-}
-
-let text = getLines("/Users/xdavidliu/input03.txt").joined()
+let text = getLines(fileName: "/Users/xdavidliu/input03.txt").joined()
 // join because effect crosses over across lines
 let p1 = computeDoTotal(text, ignoreDo: true)
 let p2 = computeDoTotal(text, ignoreDo: false)
