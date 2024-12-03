@@ -10,9 +10,7 @@ func computeDoTotal(_ text: String, ignoreDo: Bool) -> Int {
         } else if m.0 == "don't()" {
             effect = false
         } else if effect || ignoreDo {
-            if m.0.starts(with: "mul") {
-                total += Int(m.1!)! * Int(m.2!)!
-            }
+            total += Int(m.1!)! * Int(m.2!)!
         }
     }
     return total
