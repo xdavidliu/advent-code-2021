@@ -1,21 +1,9 @@
-import Foundation
-
-func getLines(fileName: String) -> [String.SubSequence] {
-    do {
-        let url = URL(fileURLWithPath: fileName)
-        let text = try String(contentsOf: url, encoding: .utf8)
-        return text.split(separator: "\n")
-    } catch {
-        return []
-    }
-}
-
 func eitherUpOrDown(_ nums: [Int], grace: Bool) -> Bool {
     return allBetweenOneThree(nums, sign: 1, start: 1, grace: grace)
     || allBetweenOneThree(nums, sign: -1, start: 1, grace: grace)
 }
 
-func parseNums(_ line: String.SubSequence) -> [Int] {
+func parseNums(_ line: String) -> [Int] {
     return line.split(separator: " ").map { Int($0)! }
 }
 
