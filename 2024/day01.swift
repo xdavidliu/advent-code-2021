@@ -1,16 +1,4 @@
-import Foundation
-
-func getLines(fileName: String) -> [String.SubSequence] {
-    do {
-        let url = URL(fileURLWithPath: fileName)
-        let text = try String(contentsOf: url, encoding: .utf8)
-        return text.split(separator: "\n")
-    } catch {
-        return []
-    }
-}
-
-func getTwoArrays(lines: [String.SubSequence]) -> ([Int], [Int]) {
+func getTwoArrays(lines: [String]) -> ([Int], [Int]) {
     var a: [Int] = [], b: [Int] = []
     for line in lines {
         let toks = line.split(separator: " ")
