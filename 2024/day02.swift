@@ -7,7 +7,7 @@ func parseNums(_ line: String) -> [Int] {
     return line.split(separator: " ").map { Int($0)! }
 }
 
-let lines = getLines(fileName: "/Users/xdavidliu/input02.txt")
+let lines = getLines("/Users/xdavidliu/input02.txt")
 
 let p1 = lines.filter { eitherUpOrDown(parseNums($0), grace: false) }.count
 print("part 1 = \(p1)")  // 287
