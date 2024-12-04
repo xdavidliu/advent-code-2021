@@ -1,6 +1,6 @@
 import Foundation
 
-func getLines(fileName: String) -> [String] {
+func getLines(_ fileName: String) -> [String] {
     do {
         let url = URL(fileURLWithPath: fileName)
         let text = try String(contentsOf: url, encoding: .utf8)
