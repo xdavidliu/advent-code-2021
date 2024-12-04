@@ -14,7 +14,7 @@ func computeDoTotal(_ text: String, ignoreDo: Bool) -> Int {
     return total
 }
 
-let text = getLines(fileName: "/Users/xdavidliu/input03.txt").joined()
+let text = getLines("/Users/xdavidliu/input03.txt").joined()
 // join because effect crosses over across lines
 let p1 = computeDoTotal(text, ignoreDo: true)
 let p2 = computeDoTotal(text, ignoreDo: false)
