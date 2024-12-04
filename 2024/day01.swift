@@ -20,7 +20,7 @@ func getCounter(nums: [Int]) -> [Int: Int] {
 
 // hack: if put in Documents folder, it will keep asking permission.
 // astonishingly, home dir does not have this security
-let lines = getLines(fileName: "/Users/xdavidliu/input01.txt")
+let lines = getLines("/Users/xdavidliu/input01.txt")
 let (a, b) = getTwoArrays(lines: lines)
 var sum = 0
 for (x, y) in zip(a, b) {
