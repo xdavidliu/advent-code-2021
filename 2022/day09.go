@@ -20,24 +20,6 @@ func hmove(hx int, hy int, dir uint8) (int, int) {
 	return hx + dirx[dir], hy + diry[dir]
 }
 
-func sign(x int) int {
-	if x < 0 {
-		return -1
-	} else if x > 0 {
-		return 1
-	} else {
-		return 0
-	}
-}
-
-func abs(x int) int {
-	if x >= 0 {
-		return x
-	} else {
-		return -x
-	}
-}
-
 func tmove(hx int, hy int, tx int, ty int) (int, int) {
 	if abs(hx-tx) <= 1 && abs(hy-ty) <= 1 {
 		return tx, ty
