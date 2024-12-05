@@ -8,14 +8,6 @@ import (
 	"strings"
 )
 
-func abs(x int) int {
-	if x >= 0 {
-		return x
-	} else {
-		return -x
-	}
-}
-
 func update(during *int, ans1 *int, v int, crt *[]byte) {
 	*during++
 	pos := (*during - 1) % 40
