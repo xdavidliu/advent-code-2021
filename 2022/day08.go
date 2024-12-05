@@ -62,14 +62,6 @@ func elemAt(grid *[][]byte, ind [2]int) byte {
 	return (*grid)[ind[0]][ind[1]]
 }
 
-func absDiff(x int, y int) int {
-	if x > y {
-		return x - y
-	} else {
-		return y - x
-	}
-}
-
 func computeNumberSeen(
 	grid *[][]byte, start Cell, outerInc Inc, innerInc Inc,
 	outerCheck Check, innerCheck Check,
@@ -89,7 +81,7 @@ func computeNumberSeen(
 			}
 			top := stack[len(stack)-1]
 			// one of these diffs is zero
-			(*numSeen)[inner[0]][inner[1]] = absDiff(inner[0], top[0]) + absDiff(inner[1], top[1])
+			(*numSeen)[inner[0]][inner[1]] = abs(inner[0]-top[0]) + abs(inner[1]-top[1])
 			stack = append(stack, inner)
 		}
 	}
