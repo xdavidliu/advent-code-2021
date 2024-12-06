@@ -114,7 +114,6 @@ func prodBestTwo(monkeys *[]monkey) int64 {
 func main() {
 	filename := "/home/xdavidliu/Documents/aoc/input11.txt"
 	bytesRead, _ := os.ReadFile(filename)
-	fmt.Println("starting...")
 	blocks := strings.Split(string(bytesRead), "\n\n")
 	var monkeys1 []monkey = nil
 	var monkeys2 []monkey = nil
