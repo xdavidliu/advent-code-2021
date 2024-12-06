@@ -18,38 +18,45 @@ func sign(x int) int {
 	}
 }
 
-type queue struct {
-	front []int
-	back  []int
+type queue[T any] struct {
+	front []T
+	back  []T
 }
 
-func pop[T](a *[]int) T {
+func pop[T any](a *[]T) T {
 	end := len(*a) - 1
 	x := (*a)[end]
 	*a = (*a)[:end]
 	return x
 }
 
-func push(x int, a *[]int) {
-	(*a) = append(*a, x)
+func push[T any](x T, a *[]T) {
+	*a = append(*a, x)
 }
 
-func makeQueue() queue {
-	return queue{nil, nil}
+func (q *queue[T]) isEmpty() bool {
+	return len(q.front) == 0 && len(q.back) == 0
 }
 
-func (q *queue) add(x int) {
+func (q *queue[T]) copy() queue[T] {
+	front := make([]T, len(q.front))
+	back := make([]T, len(q.back))
+	copy(front, q.front)
+	copy(back, q.back)
+	return queue[T]{front, back}
+}
+
+func (q *queue[T]) add(x T) {
 	q.back = append(q.back, x)
 }
 
-func (q *queue) remove() int {
+func (q *queue[T]) remove() T {
 	if 0 == len(q.front) {
 		for 1 < len(q.back) {
-			end := len(q.back) - 1
-			x := q.back[end]
-			q.back = q.back[:end]
-			q.front = append(q.front, x)
+			push(pop(&q.back), &q.front)
 		}
+		return pop(&q.back)
+	} else {
+		return pop(&q.front)
 	}
 }
-
