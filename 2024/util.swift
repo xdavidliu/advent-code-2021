@@ -1,5 +1,7 @@
 import Foundation
 
+// note: if any days fail with cryptic errors, prob because of wrong value of 
+// omittingEmptySubsequences, combined with last line being empty.
 func getLines(_ fileName: String, omittingEmptySubsequences: Bool = false) -> [String] {
     do {
         let url = URL(fileURLWithPath: fileName)
