@@ -32,17 +32,17 @@ func tmove(hx int, hy int, tx int, ty int) (int, int) {
 	}
 }
 
-func addToSet(seen *map[string]bool, a int, b int) {
+func addToSet(seen *set[string], a int, b int) {
 	key := fmt.Sprintf("%d %d", a, b)
-	(*seen)[key] = true
+	seen.insert(key)
 }
 
 func main() {
 	filename := "/home/xdavidliu/Documents/aoc/input09.txt"
 	fin, _ := os.Open(filename)
 	sc := bufio.NewScanner(bufio.NewReader(fin))
-	seen1 := make(map[string]bool)
-	seen2 := make(map[string]bool)
+	seen1 := makeSet[string]()
+	seen2 := makeSet[string]()
 	addToSet(&seen1, 0, 0)
 	addToSet(&seen2, 0, 0)
 	x := make([]int, 10)
