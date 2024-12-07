@@ -2,6 +2,7 @@ package main
 
 import (
 	"bufio"
+	"cmp"
 	"os"
 )
 
@@ -23,6 +24,17 @@ func sign(x int) int {
 	}
 }
 
+func minimum[T cmp.Ordered](xs []T) T {
+	if 0 == len(xs) {
+		panic("minimum")
+	}
+	m := xs[0]
+	for _, x := range xs {
+		m = min(x, m)
+	}
+	return m
+}
+
 func readGrid(filename string) *[][]byte {
 	var grid [][]byte
 	fin, _ := os.Open(filename)
@@ -32,6 +44,21 @@ func readGrid(filename string) *[][]byte {
 		grid = append(grid, []byte(sc.Text()))
 	}
 	return &grid
+}
+
+type set[T comparable] map[T]bool
+
+func (s *set[T]) contains(k T) bool {
+	_, ok := (*s)[k]
+	return ok
+}
+
+func (s *set[T]) insert(k T) {
+	(*s)[k] = true
+}
+
+func (s *set[T]) remove(k T) {
+	delete(*s, k)
 }
 
 type queue[T any] struct {
