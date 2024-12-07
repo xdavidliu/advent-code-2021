@@ -47,17 +47,6 @@ func insideRight(ind [2]int, grid *[][]byte) bool { return ind[1] < len((*grid)[
 func insideAbove(ind [2]int, _ *[][]byte) bool    { return ind[0] >= 0 }
 func insideBelow(ind [2]int, grid *[][]byte) bool { return ind[0] < len(*grid) }
 
-func readGrid(filename string) *[][]byte {
-	var grid [][]byte
-	fin, _ := os.Open(filename)
-	defer fin.Close()
-	sc := bufio.NewScanner(bufio.NewReader(fin))
-	for sc.Scan() {
-		grid = append(grid, []byte(sc.Text()))
-	}
-	return &grid
-}
-
 func elemAt(grid *[][]byte, ind [2]int) byte {
 	return (*grid)[ind[0]][ind[1]]
 }
