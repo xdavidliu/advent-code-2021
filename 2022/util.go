@@ -1,5 +1,10 @@
 package main
 
+import (
+	"bufio"
+	"os"
+)
+
 func abs(x int) int {
 	if x >= 0 {
 		return x
@@ -16,6 +21,17 @@ func sign(x int) int {
 	} else {
 		return 0
 	}
+}
+
+func readGrid(filename string) *[][]byte {
+	var grid [][]byte
+	fin, _ := os.Open(filename)
+	defer fin.Close()
+	sc := bufio.NewScanner(bufio.NewReader(fin))
+	for sc.Scan() {
+		grid = append(grid, []byte(sc.Text()))
+	}
+	return &grid
 }
 
 type queue[T any] struct {
