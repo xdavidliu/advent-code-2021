@@ -119,7 +119,7 @@ func solvePart2(_ grid: inout [[UInt8]], _ foundPart1: Set<Int>) -> Int {
     return p2
 }
 
-var grid = getLines("/Users/xdavidliu/input06.txt").map{$0.asciiValues}
+var grid = getLines("/Users/xdavidliu/input06.txt", omittingEmptySubsequences: true).map{$0.asciiValues}
 let (setP1, _) = solve(grid, part: 1)
 let p2 = solvePart2(&grid, setP1)
 print("part 1 = \(setP1.count)")  // 4973
