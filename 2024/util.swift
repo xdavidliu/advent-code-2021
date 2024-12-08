@@ -20,3 +20,13 @@ extension StringProtocol {
 
 //https://docs.swift.org/swift-book/documentation/the-swift-programming-language/stringsandcharacters/#String-Indices
 // "Swift strings can’t be indexed by integer values."
+
+func singleInd(r: Int, c: Int, nc: Int) -> Int {
+    return c + r * nc
+}
+
+func splitInd(i: Int, nc: Int) -> (Int, Int) {
+    let r = i / nc
+    let c = i % nc
+    return (r, c)
+}
