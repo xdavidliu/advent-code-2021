@@ -65,6 +65,14 @@ func makeGrid[T any](nr int, nc int) *[][]T {
 	return &grid
 }
 
+func fillGrid[T any](grid *[][]T, x T) {
+	for r := range *grid {
+		for c := range (*grid)[0] {
+			(*grid)[r][c] = x
+		}
+	}
+}
+
 type set[T comparable] map[T]bool
 
 func (s *set[T]) contains(k T) bool {
