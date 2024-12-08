@@ -1,6 +1,6 @@
 import Foundation
 
-// note: if any days fail with cryptic errors, prob because of wrong value of 
+// note: if any days fail with cryptic errors, prob because of wrong value of
 // omittingEmptySubsequences, combined with last line being empty.
 func getLines(_ fileName: String, omittingEmptySubsequences: Bool = false) -> [String] {
     do {
@@ -10,6 +10,11 @@ func getLines(_ fileName: String, omittingEmptySubsequences: Bool = false) -> [S
     } catch {
         return []
     }
+}
+
+func getGrid(_ filename: String) -> [[UInt8]] {
+    return getLines(filename, omittingEmptySubsequences: true)
+        .map{$0.asciiValues}
 }
 
 // https://stackoverflow.com/a/29835826/2990344
@@ -29,4 +34,14 @@ func splitInd(i: Int, nc: Int) -> (Int, Int) {
     let r = i / nc
     let c = i % nc
     return (r, c)
+}
+
+func gcd(_ a: Int, _ b: Int) -> Int {
+    if a < b {
+        return gcd(b, a)
+    } else if b == 0 {
+        return a
+    } else {
+        return gcd(b, a % b)
+    }
 }
