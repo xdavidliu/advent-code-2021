@@ -1,9 +1,7 @@
 package main
 
 import (
-	"bufio"
 	"fmt"
-	"os"
 )
 
 type Cell = [2]int
@@ -11,19 +9,11 @@ type Inc = func(*[2]int)
 type Check = func([2]int, *[][]byte) bool
 type Compute = func(*[][]byte, Cell, Inc, Inc, Check, Check) *[][]int
 
-func makeGrid(nr int, nc int) *[][]int {
-	grid := make([][]int, nr)
-	for i := range grid {
-		grid[i] = make([]int, nc)
-	}
-	return &grid
-}
-
 func computeCanSee(
 	grid *[][]byte, start Cell, outerInc Inc, innerInc Inc,
 	outerCheck Check, innerCheck Check,
 ) *[][]int {
-	canSee := makeGrid(len(*grid), len((*grid)[0]))
+	canSee := makeGrid[int](len(*grid), len((*grid)[0]))
 	for innerStart := start; outerCheck(innerStart, grid); outerInc(&innerStart) {
 		var hi byte = 0
 		for inner := innerStart; innerCheck(inner, grid); innerInc(&inner) {
@@ -55,7 +45,7 @@ func computeNumberSeen(
 	grid *[][]byte, start Cell, outerInc Inc, innerInc Inc,
 	outerCheck Check, innerCheck Check,
 ) *[][]int {
-	numSeen := makeGrid(len(*grid), len((*grid)[0]))
+	numSeen := makeGrid[int](len(*grid), len((*grid)[0]))
 	for innerStart := start; outerCheck(innerStart, grid); outerInc(&innerStart) {
 		// because cannot see any beyond edge
 		(*numSeen)[innerStart[0]][innerStart[1]] = 0
