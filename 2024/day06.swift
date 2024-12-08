@@ -20,16 +20,6 @@ func findGuard(_ grid: [[UInt8]]) -> (Int, Int) {
     fatalError("guard not found")
 }
 
-func singleInd(r: Int, c: Int, nc: Int) -> Int {
-    return c + r * nc
-}
-
-func splitInd(i: Int, nc: Int) -> (Int, Int) {
-    let r = i / nc
-    let c = i % nc
-    return (r, c)
-}
-
 // pair not hashable; otherwise this would be dict
 func turnRight(dr: Int, dc: Int) -> (Int, Int) {
     let d = (dr, dc)
