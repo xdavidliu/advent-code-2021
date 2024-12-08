@@ -35,6 +35,17 @@ func minimum[T cmp.Ordered](xs []T) T {
 	return m
 }
 
+func maximum[T cmp.Ordered](xs []T) T {
+	if 0 == len(xs) {
+		panic("maximum")
+	}
+	m := xs[0]
+	for _, x := range xs {
+		m = max(x, m)
+	}
+	return m
+}
+
 func readGrid(filename string) *[][]byte {
 	var grid [][]byte
 	fin, _ := os.Open(filename)
