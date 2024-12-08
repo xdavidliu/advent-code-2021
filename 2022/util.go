@@ -130,13 +130,3 @@ func (q *queue[T]) remove() T {
 		return pop(&q.front)
 	}
 }
-
-// lol
-func comPair(a [2]int, b [2]int) int {
-	c0 := cmp.Compare(a[0], b[0])
-	if c0 != 0 {
-		return c0
-	} else {
-		return cmp.Compare(a[1], b[1])
-	}
-}
