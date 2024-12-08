@@ -57,6 +57,14 @@ func readGrid(filename string) *[][]byte {
 	return &grid
 }
 
+func makeGrid[T any](nr int, nc int) *[][]T {
+	grid := make([][]T, nr)
+	for i := range grid {
+		grid[i] = make([]T, nc)
+	}
+	return &grid
+}
+
 type set[T comparable] map[T]bool
 
 func (s *set[T]) contains(k T) bool {
