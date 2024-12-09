@@ -42,3 +42,22 @@ while left < right {
 }
 
 print("part 1 =", acc)  // 6258319840548
+
+/*
+
+ have list with key being from 1-9 and value being list of indices
+ go thru input and for each data (not free) so odd index with length x, append to
+ the x-th slot in the top list
+ 
+ now go thru each free. Suppose length y. Then want rightmost index of z <= y.
+ Note this rightmost index must be > current left.
+ search thru list for that, in O(1) time. pop that one, now free is y - z. Repeat
+ until the free is 0 or there does not exist ANY z satisfying this.
+ 
+ Then move on to next free, and repeat.
+ 
+ while this is being done, accumulate score. Keep track of which right ones are moved,
+ that way you can omit them when summing.
+ 
+ 
+ */
