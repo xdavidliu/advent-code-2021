@@ -1,47 +1,66 @@
 import Foundation
 
-let filename = "/Users/xdavidliu/input09.txt"
-let zero = Character("0").asciiValue!
-let diskMap = getGrid(filename)[0].map{$0 - zero}
-var fileData: [Int] = []
+let filename = "/Users/xdavidliu/sample.txt"
+let diskMap = readDiskMap(filename)
+let fileData = convertToFileData(diskMap)
+print("part 1 =", part1(fileData))  // 6258319840548
+let table = makeTable(diskMap)
 
-var isFree = false
-var addr = 0
-let freeSpace = -1
-for count in diskMap {
-    let ch = if isFree { freeSpace } else { addr }
-    for _ in 0..<count {
-        fileData.append(ch)
+func makeTable(_ diskMap: [UInt8]) -> [[Int]] {
+    var out = [[Int]](repeating: [], count: 10)
+    for i in stride(from: 0, to: diskMap.count, by: 2) {
+        out[Int(diskMap[i])].append(i)
     }
-    if isFree {
-        addr += 1
-    }
-    isFree = !isFree
+    return out
 }
 
-var left = 0
-var right = fileData.count
-var acc = 0
+func readDiskMap(_ filename: String) -> [UInt8] {
+    return getGrid(filename)[0].map{$0 - Character("0").asciiValue!}
+}
 
-while left < right {
-    let id = fileData[left]
-    if id != -1 {
-        acc += id * left
-    } else {
-        right -= 1
-        while left < right && fileData[right] == -1 {
-            right -= 1
+func convertToFileData(_ diskMap: [UInt8]) -> [Int] {
+    var fileData: [Int] = []
+    var isFree = false
+    var addr = 0
+    let freeSpace = -1
+    for count in diskMap {
+        let ch = if isFree { freeSpace } else { addr }
+        for _ in 0..<count {
+            fileData.append(ch)
         }
-        if left == right {
-            break
+        if isFree {
+            addr += 1
+        }
+        isFree = !isFree
+    }
+    return fileData
+}
+
+func part1(_ fileData: [Int]) -> Int {
+    var left = 0
+    var right = fileData.count
+    var acc = 0
+
+    while left < right {
+        let id = fileData[left]
+        if id != -1 {
+            acc += id * left
         } else {
-            acc += left * fileData[right]
+            right -= 1
+            while left < right && fileData[right] == -1 {
+                right -= 1
+            }
+            if left == right {
+                break
+            } else {
+                acc += left * fileData[right]
+            }
         }
+        left += 1
     }
-    left += 1
+    return acc
 }
 
-print("part 1 =", acc)  // 6258319840548
 
 /*
 
