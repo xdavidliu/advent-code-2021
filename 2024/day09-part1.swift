@@ -4,15 +4,19 @@ let filename = "/Users/xdavidliu/sample.txt"
 let diskMap = readDiskMap(filename)
 let fileData = convertToFileData(diskMap)
 print("part 1 =", part1(fileData))  // 6258319840548
+print("part 2 =", part2(diskMap))  //
+// 10690294388280 too high
+// 2318
+// expect 2858
 
 func sumFormula(_ n: Int) -> Int {
     return n * (n+1) / 2
 }
 
-func popRightmostAtLeast(_ length: Int, _ table: inout [[Int]]) -> Optional<Int> {
+func popRightmostAtMost(_ length: Int, _ table: inout [[Int]]) -> Optional<Int> {
     var rightMost = Int.min
     var rightMostInd: Optional<Int> = nil
-    for i in length...9 {
+    for i in 1...length {
         if let x = table[i].last {
             if x > rightMost {
                 rightMost = x
@@ -27,34 +31,58 @@ func popRightmostAtLeast(_ length: Int, _ table: inout [[Int]]) -> Optional<Int>
     }
 }
 
-func part2(_ diskMap: [UInt8]) -> Int {
+func printVal(val: Int, n: Int) {
+    for _ in 0..<n {
+        print(val, terminator: "")
+    }
+}
+
+func printDots(n: Int) {
+    for _ in 0..<n {
+        print(".", terminator: "")
+    }
+}
+
+func part2(_ diskMap: [Int]) -> Int {
     var left = 0
     var total = 0
     var dataCount = 0
     var disabled = [Bool](repeating: false, count: diskMap.count)
     var table = makeTable(diskMap)
-    while true {
+    while left < diskMap.count {
         let length = Int(diskMap[left])
         if left.isMultiple(of: 2) {
-            let addr = left / 2
-            total += addr * (sumFormula(dataCount - 1 + length) - sumFormula(dataCount - 1))
+            if !disabled[left] {
+                let addr = left / 2
+//                printVal(val: addr, n: length)
+                total += addr * (sumFormula(dataCount - 1 + length) - sumFormula(dataCount - 1))
+            } else {
+//                printDots(n: length)
+            }
+            dataCount += length
         } else {
             var freeRemain = length
             while freeRemain > 0 {
-                if let right = popRightmostAtLeast(length, &table) {
+                if let right = popRightmostAtMost(freeRemain, &table) {
                     let rightLength = diskMap[right]
+                    disabled[right] = true
+                    let addr = right / 2
+//                    printVal(val: addr, n: rightLength)
+                    total += addr * (sumFormula(dataCount - 1 + rightLength) - sumFormula(dataCount - 1))
+                    dataCount += rightLength
                     freeRemain -= rightLength
                 } else {
-                    
+                    break
                 }
             }
-            
-            /*
-             if
-             */
+            if freeRemain > 0 {
+//                printDots(n: freeRemain)
+            }
+            dataCount += freeRemain
         }
-        dataCount += length  // wait, do I
+        left += 1
     }
+//    print()
     return total
 }
 
@@ -73,11 +101,9 @@ func part2(_ diskMap: [UInt8]) -> Int {
  
  length is the value, so track how many seen so far.
  
- 
- 
  */
 
-func makeTable(_ diskMap: [UInt8]) -> [[Int]] {
+func makeTable(_ diskMap: [Int]) -> [[Int]] {
     var out = [[Int]](repeating: [], count: 10)
     for i in stride(from: 0, to: diskMap.count, by: 2) {
         out[Int(diskMap[i])].append(i)
@@ -85,11 +111,11 @@ func makeTable(_ diskMap: [UInt8]) -> [[Int]] {
     return out
 }
 
-func readDiskMap(_ filename: String) -> [UInt8] {
-    return getGrid(filename)[0].map{$0 - Character("0").asciiValue!}
+func readDiskMap(_ filename: String) -> [Int] {
+    return getGrid(filename)[0].map{Int($0 - Character("0").asciiValue!)}
 }
 
-func convertToFileData(_ diskMap: [UInt8]) -> [Int] {
+func convertToFileData(_ diskMap: [Int]) -> [Int] {
     var fileData: [Int] = []
     var isFree = false
     var addr = 0
