@@ -1,5 +1,10 @@
 package main
 
+// note: in this dir I've often returned *[] or *map[] to save copy
+// when in reality these are lightweight handles, so can be copied just fine.
+// can go back and remove lots of * in return types, and even in params
+// when not being mutated
+
 import (
 	"bufio"
 	"cmp"
@@ -129,4 +134,11 @@ func (q *queue[T]) remove() T {
 	} else {
 		return pop(&q.front)
 	}
+}
+
+func appendToCopy[T any](s []T, x T) []T {
+	out := make([]T, 1+len(s))
+	copy(out, s)
+	out[len(out)-1] = x
+	return out
 }
