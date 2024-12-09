@@ -4,7 +4,78 @@ let filename = "/Users/xdavidliu/sample.txt"
 let diskMap = readDiskMap(filename)
 let fileData = convertToFileData(diskMap)
 print("part 1 =", part1(fileData))  // 6258319840548
-let table = makeTable(diskMap)
+
+func sumFormula(_ n: Int) -> Int {
+    return n * (n+1) / 2
+}
+
+func popRightmostAtLeast(_ length: Int, _ table: inout [[Int]]) -> Optional<Int> {
+    var rightMost = Int.min
+    var rightMostInd: Optional<Int> = nil
+    for i in length...9 {
+        if let x = table[i].last {
+            if x > rightMost {
+                rightMost = x
+                rightMostInd = i
+            }
+        }
+    }
+    if let i = rightMostInd {
+        return table[i].popLast()
+    } else {
+        return nil
+    }
+}
+
+func part2(_ diskMap: [UInt8]) -> Int {
+    var left = 0
+    var total = 0
+    var dataCount = 0
+    var disabled = [Bool](repeating: false, count: diskMap.count)
+    var table = makeTable(diskMap)
+    while true {
+        let length = Int(diskMap[left])
+        if left.isMultiple(of: 2) {
+            let addr = left / 2
+            total += addr * (sumFormula(dataCount - 1 + length) - sumFormula(dataCount - 1))
+        } else {
+            var freeRemain = length
+            while freeRemain > 0 {
+                if let right = popRightmostAtLeast(length, &table) {
+                    let rightLength = diskMap[right]
+                    freeRemain -= rightLength
+                } else {
+                    
+                }
+            }
+            
+            /*
+             if
+             */
+        }
+        dataCount += length  // wait, do I
+    }
+    return total
+}
+
+/*
+ ah, address can be obtained by index in diskMap. That's done BEFORE the moving
+ from ind, what's addr
+ ind is even number. 0, 2, 4. Ah, it's just addr = ind / 2
+ 
+ sum from x to x + y
+ 2 + 3 + 4 + 5
+ = sum to 5 - sum to (2-1)
+ = 5(6)/2 - 1(2)/2
+ = 15 - 1 = 14
+ 
+ (x+y)(x+y+1)/2 - x(x-1)/2
+ 
+ length is the value, so track how many seen so far.
+ 
+ 
+ 
+ */
 
 func makeTable(_ diskMap: [UInt8]) -> [[Int]] {
     var out = [[Int]](repeating: [], count: 10)
