@@ -54,7 +54,6 @@ func part2(_ diskMap: [Int]) -> Int {
                 let addr = left / 2
                 total += addr * (sumFormula(dataCount - 1 + length) - sumFormula(dataCount - 1))
                 disabled[left] = true
-            } else {
             }
             dataCount += length
         } else {
