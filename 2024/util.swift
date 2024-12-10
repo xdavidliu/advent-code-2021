@@ -45,3 +45,27 @@ func gcd(_ a: Int, _ b: Int) -> Int {
         return gcd(b, a % b)
     }
 }
+
+// https://docs.swift.org/swift-book/documentation/the-swift-programming-language/generics/
+struct Queue<Element> {
+    var front: [Element] = []
+    var back: [Element] = []
+    var isEmpty: Bool {
+        get {
+            return front.isEmpty && back.isEmpty
+        }
+    }
+    mutating func add(_ item: Element) {
+        back.append(item)
+    }
+    mutating func remove() -> Element {
+        if front.isEmpty {
+            while back.count > 1 {
+                front.append(back.popLast()!)
+            }
+            return back.popLast()!
+        } else {
+            return front.popLast()!
+        }
+    }
+}
