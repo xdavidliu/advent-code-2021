@@ -29,18 +29,6 @@ func popRightmostAtMost(_ length: Int, _ table: inout [[Int]])
     }
 }
 
-func printVal(val: Int, n: Int) {
-    for _ in 0..<n {
-        print(val, terminator: "")
-    }
-}
-
-func printDots(n: Int) {
-    for _ in 0..<n {
-        print(".", terminator: "")
-    }
-}
-
 func part2(_ diskMap: [Int]) -> Int {
     var left = 0
     var total = 0
