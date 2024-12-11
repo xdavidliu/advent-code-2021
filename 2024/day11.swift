@@ -3,12 +3,10 @@ import Foundation
 let input = [7568: 1, 155731: 1, 0: 1, 972: 1, 1: 1, 6919238: 1, 80646: 1, 22: 1]
 
 var a = input
-for _ in 0..<25 {
-    a = blinkOnce(a)
-}
-print("part 1 =", totalSize(a))  // 186424
-
-for _ in 0..<50 {
+for i in 0..<75 {
+    if i == 25 {
+        print("part 1 =", totalSize(a))  // 186424
+    }
     a = blinkOnce(a)
 }
 print("part 2 =", totalSize(a))  // 219838428124832
