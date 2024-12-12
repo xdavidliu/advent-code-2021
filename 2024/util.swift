@@ -30,6 +30,10 @@ func singleInd(r: Int, c: Int, nc: Int) -> Int {
     return c + r * nc
 }
 
+func isValidIndex<T>(_ grid: [[T]], r: Int, c: Int) -> Bool {
+    return grid.indices.contains(r) && grid[r].indices.contains(c)
+}
+
 func splitInd(i: Int, nc: Int) -> (Int, Int) {
     let r = i / nc
     let c = i % nc
