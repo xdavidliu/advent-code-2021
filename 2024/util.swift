@@ -3,12 +3,16 @@ import Foundation
 // note: if any days fail with cryptic errors, prob because of wrong value of
 // omittingEmptySubsequences, combined with last line being empty.
 func getLines(_ fileName: String, omittingEmptySubsequences: Bool = false) -> [String] {
+    let text = getText(fileName)
+    return text.split(separator: "\n", omittingEmptySubsequences: omittingEmptySubsequences).map(String.init)
+}
+
+func getText(_ fileName: String) -> String {
     do {
         let url = URL(fileURLWithPath: fileName)
-        let text = try String(contentsOf: url, encoding: .utf8)
-        return text.split(separator: "\n", omittingEmptySubsequences: omittingEmptySubsequences).map(String.init)
+        return try String(contentsOf: url, encoding: .utf8)
     } catch {
-        return []
+        return ""
     }
 }
 
