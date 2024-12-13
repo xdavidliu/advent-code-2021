@@ -3,7 +3,7 @@ function parseline(line)
     words[1], parse(Int, words[2])
 end
 
-function part1(ins)
+function run(ins)
     acc = 0
     seen = repeat([false], length(ins))
     ptr = 1
@@ -26,7 +26,28 @@ function part1(ins)
     return acc, true
 end
 
+function flip(ins, k)
+    name, c = ins[k]
+    if name == "nop"
+        ins[k] = ("jmp", c)
+    elseif name == "jmp"
+        ins[k] = ("nop", c)
+    end
+end
+
+function part2(ins)
+    for k in eachindex(ins)
+        flip(ins, k)
+        acc, termed = run(ins)
+        flip(ins, k)
+        if termed
+            return acc
+        end
+    end
+end
+
 filename = "/Users/xdavidliu/Documents/input08.txt"
 ins = [parseline(l) for l in readlines(filename)]
-p1, _ = part1(ins)
+p1, _ = run(ins)
 println("part 1 = ", p1)  # 1753
+println("part 2 = ", part2(ins))  # 733
