@@ -1,11 +1,5 @@
 import Foundation
 
-func sameFraction(_ a: (Int, Int), _ b: (Int, Int)) -> Bool {
-    let ga = gcd(a.0, a.1)
-    let gb = gcd(b.0, b.1)
-    return a.0 / ga == b.0 / gb && a.1 / ga == b.1 / gb
-}
-
 func solve(xa: Int, ya: Int, xb: Int, yb: Int, px: Int, py: Int) -> Optional<(Int, Int)> {
     let det = xa * yb - xb * ya
     assert(det != 0)  // seems to be true for my data
