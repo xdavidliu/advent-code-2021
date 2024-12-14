@@ -67,22 +67,31 @@ func part1(_ coords: [(Int, Int, Int, Int)], dt: Int, n: (Int, Int)) -> Int {
     return prod
 }
 
-func plot(_ ps: [(Int, Int)], n: (Int, Int), output: inout FileHandlerOutputStream) {
-    let space = Character(" ").asciiValue!
-    var grid = [[UInt8]](repeating: [UInt8](repeating: space, count: n.0), count: n.1)
+func positionsToGrid(_ ps: [(Int, Int)], _ n: (Int, Int), _ grid: inout [[UInt8]]) {
     for (x, y) in ps {
         grid[y][x] = Character("#").asciiValue!
     }
+}
+
+func hasConsecutive(_ pSet: Set<Int>, _ p: (Int, Int), nInARow: Int, nc: Int) -> Bool {
+    let ind = singleInd(r: p.1, c: p.0, nc: nc)
+    assert(pSet.contains(ind))
+    if p.0 > nc - nInARow {
+        return false
+    }
+    for dx in 1..<nInARow {
+        if !pSet.contains(ind + dx) {
+            return false
+        }
+    }
+    return true
+}
+
+func plot(_ ps: [(Int, Int)], n: (Int, Int), grid: [[UInt8]], output: inout FileHandlerOutputStream) {
     for row in grid {
         print(String(bytes: row, encoding: .utf8)!, to: &output)
     }
 }
-
-let dt = 100
-let n = (101, 103)
-let filename = "/Users/xdavidliu/input14.txt"
-let coords = getCoords(filename)
-//print("part 1 =", part1(coords, dt: dt, n: n)) // 224554908
 
 // taken from
 // https://nshipster.com/textoutputstream/#writing-output-to-a-file
@@ -102,12 +111,41 @@ struct FileHandlerOutputStream: TextOutputStream {
     }
 }
 
-let url = URL(fileURLWithPath: "/Users/xdavidliu/plot.txt")
-
-for tt in 52...52 {
-    let fileHandle = try FileHandle(forWritingTo: url)
-    var output = FileHandlerOutputStream(fileHandle)
-    print(tt, to: &output)
-    plot(evolveAll(coords, dt: tt, n: n), n: n, output: &output)
-    usleep(800_000)
+func clear(_ grid: inout [[UInt8]]) {
+    for r in grid.indices {
+        for c in grid[r].indices {
+            grid[r][c] = Character(" ").asciiValue!
+        }
+    }
 }
+
+let dt = 100
+let n = (101, 103)
+let filename = "/Users/xdavidliu/input14.txt"
+let coords = getCoords(filename)
+//print("part 1 =", part1(coords, dt: dt, n: n)) // 224554908
+
+func part2() -> Int {
+    let url = URL(fileURLWithPath: "/Users/xdavidliu/plot.txt")
+    let space = Character(" ").asciiValue!
+    var grid = [[UInt8]](repeating: [UInt8](repeating: space, count: n.0), count: n.1)
+    for dt in 6000...10000 {
+        //    let fileHandle = try FileHandle(forWritingTo: url)
+        //    var output = FileHandlerOutputStream(fileHandle)
+        let ps = evolveAll(coords, dt: dt, n: n)
+        let pSet = Set(ps.map{singleInd(r: $0.1, c: $0.0, nc: grid[0].count)})
+        for (x, y) in ps {
+            if hasConsecutive(pSet, (x, y), nInARow: 8, nc: grid[y].count) {
+                return dt
+            }
+        }
+            //    positionsToGrid(ps, n, &grid)
+            //    print(tt, to: &output)
+            //    plot(evolveAll(coords, dt: tt, n: n), n: n, grid: grid, output: &output)
+        clear(&grid)
+        //    usleep(800_000)
+    }
+    return -1
+}
+
+print("part 2 =", part2())  // 6644
