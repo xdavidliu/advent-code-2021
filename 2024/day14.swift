@@ -87,27 +87,9 @@ func hasConsecutive(_ pSet: Set<Int>, _ p: (Int, Int), nInARow: Int, nc: Int) ->
     return true
 }
 
-func plot(_ ps: [(Int, Int)], n: (Int, Int), grid: [[UInt8]], output: inout FileHandlerOutputStream) {
+func plot(_ grid: [[UInt8]]) {
     for row in grid {
-        print(String(bytes: row, encoding: .utf8)!, to: &output)
-    }
-}
-
-// taken from
-// https://nshipster.com/textoutputstream/#writing-output-to-a-file
-struct FileHandlerOutputStream: TextOutputStream {
-    private let fileHandle: FileHandle
-    let encoding: String.Encoding
-
-    init(_ fileHandle: FileHandle, encoding: String.Encoding = .utf8) {
-        self.fileHandle = fileHandle
-        self.encoding = encoding
-    }
-
-    mutating func write(_ string: String) {
-        if let data = string.data(using: encoding) {
-            fileHandle.write(data)
-        }
+        print(String(bytes: row, encoding: .utf8)!)
     }
 }
 
@@ -123,15 +105,11 @@ let dt = 100
 let n = (101, 103)
 let filename = "/Users/xdavidliu/input14.txt"
 let coords = getCoords(filename)
-//print("part 1 =", part1(coords, dt: dt, n: n)) // 224554908
+print("part 1 =", part1(coords, dt: dt, n: n)) // 224554908
 
 func part2() -> Int {
-    let url = URL(fileURLWithPath: "/Users/xdavidliu/plot.txt")
-    let space = Character(" ").asciiValue!
     var grid = [[UInt8]](repeating: [UInt8](repeating: space, count: n.0), count: n.1)
-    for dt in 6000...10000 {
-        //    let fileHandle = try FileHandle(forWritingTo: url)
-        //    var output = FileHandlerOutputStream(fileHandle)
+    for dt in 6600...6700 {
         let ps = evolveAll(coords, dt: dt, n: n)
         let pSet = Set(ps.map{singleInd(r: $0.1, c: $0.0, nc: grid[0].count)})
         for (x, y) in ps {
@@ -139,13 +117,16 @@ func part2() -> Int {
                 return dt
             }
         }
-            //    positionsToGrid(ps, n, &grid)
-            //    print(tt, to: &output)
-            //    plot(evolveAll(coords, dt: tt, n: n), n: n, grid: grid, output: &output)
         clear(&grid)
-        //    usleep(800_000)
     }
     return -1
 }
 
-print("part 2 =", part2())  // 6644
+let p2 = part2()
+print("part 2 =", p2)  // 6644
+
+let ps = evolveAll(coords, dt: p2, n: n)
+let space = Character(" ").asciiValue!
+var grid = [[UInt8]](repeating: [UInt8](repeating: space, count: n.0), count: n.1)
+positionsToGrid(ps, n, &grid)
+//plot(grid)
