@@ -87,12 +87,6 @@ func hasConsecutive(_ pSet: Set<Int>, _ p: (Int, Int), nInARow: Int, nc: Int) ->
     return true
 }
 
-func plot(_ grid: [[UInt8]]) {
-    for row in grid {
-        print(String(bytes: row, encoding: .utf8)!)
-    }
-}
-
 func clear(_ grid: inout [[UInt8]]) {
     for r in grid.indices {
         for c in grid[r].indices {
