@@ -21,6 +21,12 @@ func getGrid(_ filename: String) -> [[UInt8]] {
         .map{$0.asciiValues}
 }
 
+func plot(_ grid: [[UInt8]]) {
+    for row in grid {
+        print(String(bytes: row, encoding: .utf8)!)
+    }
+}
+
 // https://stackoverflow.com/a/29835826/2990344
 
 extension StringProtocol {
