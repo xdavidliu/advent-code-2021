@@ -81,7 +81,7 @@ function part1(lines)
         before, after = after, before
     end
     p1 = count(==('#'), before, dims=:)
-    println("part 1 = ", p1)  # 2441
+    println("part 1 = ", p1)
 end
 
 function nextseattwo(grid, seen, r, c)
@@ -178,9 +178,9 @@ function part2(lines)
         # showgrid(before)
     end
     p2 = count(==('#'), before, dims=:)
-    println("part 2 = ", p2)  # 2190
+    println("part 2 = ", p2)
 end
 
 lines = readlines("/home/xdavidliu/Documents/aoc/input11.txt")
-part1(lines)
-part2(lines)
+part1(lines)  # 2441
+part2(lines)  # 2190
