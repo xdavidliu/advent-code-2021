@@ -66,8 +66,8 @@ func gcd(_ a: Int, _ b: Int) -> Int {
 
 // https://docs.swift.org/swift-book/documentation/the-swift-programming-language/generics/
 struct Queue<Element> {
-    var front: [Element] = []
-    var back: [Element] = []
+    private var front: [Element] = []
+    private var back: [Element] = []
     var isEmpty: Bool {
         get {
             return front.isEmpty && back.isEmpty
@@ -85,5 +85,78 @@ struct Queue<Element> {
         } else {
             return front.popLast()!
         }
+    }
+}
+
+// based on 2019 day 18 in common lisp, based on CLRS
+struct MinHeap<Element> {
+    private var arr: [(Int, Element)] = []
+    
+    var count: Int {
+        get {
+            return arr.count
+        }
+    }
+    
+    var isEmpty: Bool {
+        get {
+            return arr.isEmpty
+        }
+    }
+    
+    private static func parent (_ i: Int) -> Int {
+        return (i-1) / 2
+    }
+    
+    private static func leftChild(_ i: Int) -> Int {
+        return 1 + 2 * i
+    }
+    
+    private static func rightChild(_ i: Int) -> Int {
+        return 2 + 2 * i
+    }
+    
+    private func indMin(_ i: Int, _ k: Int) -> Int {
+        return if arr[i].0 <= arr[k].0 { i } else { k }
+    }
+    
+    private mutating func minHeapify(_ i: Int) {
+        let l = MinHeap.leftChild(i)  // silly that this needs MinHeap prefix
+        let r = MinHeap.rightChild(i)
+        var m = i
+        if l < count {
+            m = indMin(m, l)
+        }
+        if r < count {
+            m = indMin(m, r)
+        }
+        if m != i {
+            (arr[m], arr[i]) = (arr[i], arr[m])
+            minHeapify(m)
+        }
+    }
+    
+    mutating func pop() -> (Int, Element) {
+        let last = count - 1
+        (arr[0], arr[last]) = (arr[last], arr[0])
+        let minElem = arr.popLast()!
+        minHeapify(0)
+        return minElem
+    }
+
+    private mutating func decreaseKey(_ k: Int, _ toVal: Int) {
+        var i = k
+        while i != 0 && toVal < arr[MinHeap.parent(i)].0 {
+            (arr[i], arr[MinHeap.parent(i)]) = (arr[MinHeap.parent(i)], arr[i])
+            i = MinHeap.parent(i)
+        }
+        if toVal < arr[i].0 {
+            arr[i] = (toVal, arr[i].1)
+        }
+    }
+    
+    mutating func insert(_ key: Int, _ elem: Element) {
+        arr.append((Int.max, elem))
+        decreaseKey(arr.count - 1, key)
     }
 }
