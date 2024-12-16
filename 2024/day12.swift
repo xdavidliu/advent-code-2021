@@ -4,10 +4,6 @@ let deltas = [(1, 0), (-1, 0), (0, 1), (0, -1)]
 
 solve()
 
-func singleIndWithD(r: Int, c: Int, id: Int, nc: Int, nr: Int) -> Int {
-    return id * nr * nc + r * nc + c
-}
-
 func unwrapSingleInd(i: Int, nr: Int, nc: Int) -> (Int, Int, Int) {
     let nrc = nr * nc
     let id = i / nrc
