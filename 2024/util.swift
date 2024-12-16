@@ -40,6 +40,10 @@ func singleInd(r: Int, c: Int, nc: Int) -> Int {
     return c + r * nc
 }
 
+func singleIndWithD(r: Int, c: Int, id: Int, nc: Int, nr: Int) -> Int {
+    return id * nr * nc + r * nc + c
+}
+
 func isValidIndex<T>(_ grid: [[T]], r: Int, c: Int) -> Bool {
     return grid.indices.contains(r) && grid[r].indices.contains(c)
 }
