@@ -11,23 +11,36 @@ func findChar(_ grid: [[UInt8]], _ ch: String) -> (Int, Int) {
     fatalError("findStart")
 }
 
-func part1() -> Int {
+func solve() {
     let filename = "/Users/xdavidliu/input16.txt"
     let grid = getGrid(filename)
     let (nr, nc) = (grid.count, grid[0].count)
+    var auxGrid = [[UInt8]](repeating: [UInt8](repeating: 0, count: nc), count: nr)
+    let isPartOfBest: UInt8 = 1
     let start = findChar(grid, "S")
     let end = findChar(grid, "E")
+    var lowestEnd = -1
     let dirs = [(0, 1), (1, 0), (0, -1), (-1, 0)]
-    var hp = MinHeap<(Int, Int, Int)>()
-    hp.insert(0, (start.0, start.1, 0))  // score 0, and east is 0
+    var hp = MinHeap<(Int, Int, Int, [Int])>()
+    hp.insert(0, (start.0, start.1, 0, [singleInd(r: start.0, c: start.1, nc: nc)]))
+    // score 0, and east is 0
     var seenScore: [Int: Int] = [:]
     let initialSeenKey = singleIndWithD(r: start.0, c: start.1, id: 0, nc: nc, nr: nr)
     seenScore[initialSeenKey] = 0
     while !hp.isEmpty {
-        let (score, (r, c, id)) = hp.pop()
+        let (score, (r, c, id, path)) = hp.pop()
         let seenKey = singleIndWithD(r: r, c: c, id: id, nc: nc, nr: nr)
+        if lowestEnd != -1 && score > lowestEnd {
+            break
+        }
         if (r, c) == end {
-            return score
+            if lowestEnd == score || lowestEnd == -1 {
+                for ind in path {
+                    let (rp, cp) = splitInd(i: ind, nc: nc)
+                    auxGrid[rp][cp] = isPartOfBest
+                }
+                lowestEnd = score
+            }
         }
         // it's okay to put this afterwards for end because a suboptimal score for
         // end will never be seen first; the below is just to clean up garbage in the heap
@@ -48,13 +61,24 @@ func part1() -> Int {
             }
             let seenKey = singleIndWithD(r: r, c: c, id: id, nc: nc, nr: nr)
             let scoreInSeen = seenScore[seenKey]
-            if scoreInSeen == nil || score < scoreInSeen! {
-                hp.insert(score, (r, c, id))
+            if scoreInSeen == nil || score <= scoreInSeen! {
+                var nextPath = path  // arrays get copied
+                nextPath.append(singleInd(r: r, c: c, nc: nc))
+                hp.insert(score, (r, c, id, nextPath))
                 seenScore[seenKey] = score
             }
         }
     }
-    fatalError("unexpectedly empty heap")
+    print("part 1 =", lowestEnd)  // 133584
+    var p2 = 0
+    for r in auxGrid.indices {
+        for c in auxGrid[r].indices {
+            if auxGrid[r][c] == isPartOfBest {
+                p2 += 1
+            }
+        }
+    }
+    print("part 2 =", p2)  // 622
 }
 
-print("part 1 =", part1())  // 133584
+solve()
