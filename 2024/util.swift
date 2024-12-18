@@ -1,5 +1,13 @@
 import Foundation
 
+// todo: use makeGrid in 10 5 14 16 9 15, all days that manually create
+// repeating grid.
+
+// todo: replace all Character instances for brevity
+func byteOf(_ s: String) -> UInt8 {
+    return Character(s).asciiValue!
+}
+
 // note: if any days fail with cryptic errors, prob because of wrong value of
 // omittingEmptySubsequences, combined with last line being empty.
 func getLines(_ fileName: String, omittingEmptySubsequences: Bool = false) -> [String] {
@@ -14,6 +22,10 @@ func getText(_ fileName: String) -> String {
     } catch {
         return ""
     }
+}
+
+func makeGrid<T>(elem: T, nr: Int, nc: Int) -> [[T]] {
+    return [[T]](repeating: [T](repeating: elem, count: nc), count: nr)
 }
 
 func getGrid(_ filename: String) -> [[UInt8]] {
