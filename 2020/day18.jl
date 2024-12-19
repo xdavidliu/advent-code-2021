@@ -29,10 +29,6 @@ function evalcompound(text, pos, collapse)
             push!(ops, v)
         else
             push!(ops, opint(text[i]))
-            if v == nothing
-                println(text, "\n", pos)
-                println(i)
-            end
             push!(ops, v)
         end
         i = k
@@ -69,6 +65,29 @@ function collapseone(ops)
     acc
 end
 
-filename = "/home/xdavidliu/Documents/aoc/input18.txt"
-p1 = sum(evaltoplevel(s, collapseone) for s in readlines(filename))
-println("part 1 = ", p1)  # 12918250417632
+function optotal(ops)
+    sum(ops[1:2:end])
+end
+
+function collapsetwo(ops)
+    acc = one(Int128)
+    inds = findall(x -> x == -2, ops)
+    push!(inds, length(ops)+1)  # sentinel * at one past end
+    l = 0
+    for r in inds
+        acc *= optotal(ops[l+1:r-1])
+        l = r
+    end
+    acc
+end
+
+function solve()
+    filename = "/home/xdavidliu/Documents/aoc/input18.txt"
+    lines = readlines(filename)
+    p1 = sum(evaltoplevel(s, collapseone) for s in lines)
+    println("part 1 = ", p1)  # 12918250417632
+    p2 = sum(evaltoplevel(s, collapsetwo) for s in lines)
+    println("part 2 = ", p2)  # 171259538712010
+end
+
+solve()
