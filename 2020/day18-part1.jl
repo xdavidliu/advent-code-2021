@@ -5,16 +5,16 @@ function evalint(text, pos)
     else
         k = k[1]  # because it returns a range like 3:3
     end
-    return parse(Int, text[pos:k-1]), k
+    parse(Int, text[pos:k-1]), k
 end
 
-function opint(opstr)
-    if opstr == "+"
+# why does julia allow 'a' == "a"
+function opint(op)
+    if op == '+'
         -1
-    elseif opstr == "*"
+    elseif op == '*'
         -2
     else
-        println(opstr)
         error("opint" )
     end
 end
@@ -29,6 +29,11 @@ function evalcompound(text, pos, collapse)
             push!(ops, v)
         else
             push!(ops, opint(text[i]))
+            if v == nothing
+                println(text, "\n", pos)
+                println(i)
+            end
+            push!(ops, v)
         end
         i = k
     end
@@ -37,9 +42,9 @@ end
 
 function evalexpr(text, pos, collapse)
     if isdigit(text[pos])
-        return evalint(text, pos)
+        evalint(text, pos)
     else
-        return evalcompound(text, pos, collapse)
+        evalcompound(text, pos, collapse)
     end
 end
 
@@ -61,8 +66,9 @@ function collapseone(ops)
         end
         i += 2
     end
+    acc
 end
 
-filename = "/usr/local/google/home/xdavidliu/Documents/temp/input18.txt"
+filename = "/home/xdavidliu/Documents/aoc/input18.txt"
 p1 = sum(evaltoplevel(s, collapseone) for s in readlines(filename))
 println("part 1 = ", p1)  # 12918250417632
