@@ -73,9 +73,15 @@ function readproblem(filename)
     ruledict, msglines
 end
 
-part1(ruledict, msgs) = sum(isfullmatch(m, ruledict) for m in msgs)
+countmatch(ruledict, msgs) = sum(isfullmatch(m, ruledict) for m in msgs)
 
 filename = "/home/xdavidliu/Documents/aoc/input19.txt"
 ruledict, msgs = readproblem(filename)
 
-println("part 1 = ", part1(ruledict, msgs))  # 111
+println("part 1 = ", countmatch(ruledict, msgs))  # 111
+
+ruledicttwo = copy(ruledict)
+ruledicttwo[8] = [[42], [42, 8]]
+ruledicttwo[11] = [[42, 31], [42, 11, 31]]
+
+println("part 2 = ", countmatch(ruledicttwo, msgs))  # 343
