@@ -115,23 +115,23 @@ gettilebelow(edge2tile, m1, t1) = getothertile(edge2tile, m1, t1, 4)
 
 function assembletiles(gs, edge2tile)
     nblk = isqrt(length(gs))
-    npt = length(first(keys(edge2tile)))
+    npt = length(first(keys(edge2tile)))-2
     arr = Matrix{Char}(undef, nblk * npt, nblk * npt);
     t1, m1 = getupperleft(tab, count, gs)
-    arr[1:npt, 1:npt] = m1
+    arr[1:npt, 1:npt] = m1[2:end-1,2:end-1]
     println(nblk)
     for r in 1:nblk
         t, m = t1, m1
         for c in 2:nblk
             t2 = gettileright(edge2tile, m, t)
             m2 = matchhoriz(m, gs[t2])
-            arr[(r-1)*npt+1:r*npt, (c-1)*npt+1:c*npt] = m2
+            arr[(r-1)*npt+1:r*npt, (c-1)*npt+1:c*npt] = m2[2:end-1, 2:end-1]
             t, m = t2, m2
         end
         if r < nblk
             tb = gettilebelow(edge2tile, m1, t1)
             mb = matchvert(m1, gs[tb])
-            arr[r*npt+1:(r+1)*npt, 1:npt] = mb
+            arr[r*npt+1:(r+1)*npt, 1:npt] = mb[2:end-1, 2:end-1]
             t1, m1 = tb, mb
         end
     end
