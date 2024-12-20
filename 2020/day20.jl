@@ -1,4 +1,4 @@
-/function tomatrix(lines)
+function tomatrix(lines)
     mat = Matrix{Char}(undef, length(lines), length(lines[1]))
     for (r, row) in enumerate(lines)
         for (c, val) in enumerate(row)
@@ -129,6 +129,56 @@ function assembletiles(gs, edge2tile, singletilecount)
     arr
 end
 
+function presentindices(monster)
+    inds = Vector{Tuple{Int, Int}}()
+    for r in 1:size(monster, 1)
+        for c in 1:size(monster, 2)
+            if monster[r, c] == '#'
+                push!(inds, (r, c))
+            end
+        end
+    end
+    inds
+end
+
+function ismonster(arr, r, c, indices)
+    for (dr, dc) in indices
+        if arr[r+dr-1, c+dc-1] != '#'
+            return false
+        end
+    end
+    true
+end
+
+function countmonster(arr, monster, indices)
+    nr, nc = size(monster)
+    k = 0
+    for r in 1:size(arr,1)+1-size(monster,1)
+        for c in 1:size(arr,2)+1-size(monster,2)
+            if ismonster(arr, r, c, indices)
+                k += 1
+            end
+        end
+    end
+    k
+end
+
+function countallmonsters(arr, originalmonster)
+    for m in alleight(originalmonster)
+        indices = presentindices(m)
+        k = countmonster(arr, m, indices)
+        if k != 0
+            return k
+        end
+    end
+    error("countallmonsters")
+end
+
+sameshapetrans(a) = [a, reverse(a), reverse(a, dims=1), reverse(a, dims=2)]
+# not transpose
+# https://discourse.julialang.org/t/error-methoderror-no-method-matching-adjoint-datetime/68230/3
+alleight(a) = vcat(sameshapetrans(a), sameshapetrans(permutedims(a)))
+
 function solve()
     filename = "/usr/local/google/home/xdavidliu/Documents/input20.txt"
     gs = readproblem(filename);
@@ -137,7 +187,18 @@ function solve()
     p1 = prod(k for (k, c) in singletilecount if c == 4)
     println("part 1 = ", p1)  # 28057939502729
     arr = assembletiles(gs, edge2tile, singletilecount)
-    displaycharmatrix(arr)
+
+    monstertext = 
+"                  # 
+#    ##    ##    ###
+ #  #  #  #  #  #   "
+
+    monster = tomatrix(split(monstertext, "\n"))    
+    moncount = countallmonsters(arr, monster)
+    arrhashcount = count(x -> x=='#', arr)
+    monhashcount = count(x -> x=='#', monster)
+    p2 = arrhashcount - moncount * monhashcount
+    println("part 2 = ", p2)  # 2489
 end
 
-solve()
+arr = solve();
