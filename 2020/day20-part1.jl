@@ -118,6 +118,8 @@ function assembletiles(gs, edge2tile)
     npt = length(first(keys(edge2tile)))
     arr = Matrix{Char}(undef, nblk * npt, nblk * npt);
     t1, m1 = getupperleft(tab, count, gs)
+    arr[1:npt, 1:npt] = m1
+    println(nblk)
     for r in 1:nblk
         t, m = t1, m1
         for c in 2:nblk
