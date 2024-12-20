@@ -1,0 +1,82 @@
+import Foundation
+
+let unreach = -1
+
+func findChar(_ grid: [[UInt8]], _ ch: String) -> (Int, Int) {
+    for r in grid.indices {
+        for c in grid[r].indices {
+            if grid[r][c] == byteOf(ch) {
+                return (r, c)
+            }
+        }
+    }
+    fatalError("findChar")
+}
+
+func bfs(_ grid: [[UInt8]], _ start: String) -> [[Int]] {
+    let (r0, c0) = findChar(grid, start)
+    var que = Queue<(Int, Int)>()
+    let nr = grid.count
+    let nc = grid[0].count
+    var dist = [[Int]](repeating: [Int](repeating: unreach, count: nc), count: nr)
+    que.add((r0, c0))
+    dist[r0][c0] = 0
+    while !que.isEmpty {
+        let (rq, cq) = que.remove()
+        for (dr, dc) in [(1, 0), (-1, 0), (0, 1), (0, -1)] {
+            let r = rq + dr
+            let c = cq + dc
+            if grid[r][c] != byteOf("#") && dist[r][c] == unreach {
+                dist[r][c] = 1 + dist[rq][cq]
+                que.add((r, c))
+            }
+        }
+    }
+    return dist
+}
+
+func countCheats(_ grid: [[UInt8]], distFromEnd: [[Int]], distFromStart: [[Int]]) -> [Int: Int] {
+    var cheatCount: [Int: Int] = [:]
+    for rg in grid.indices {
+        for cg in grid[rg].indices {
+            if grid[rg][cg] == byteOf("#") {
+                var ds: [Int] = []
+                for (dr, dc) in [(1, 0), (-1, 0), (0, 1), (0, -1)] {
+                    let r = rg + dr
+                    let c = cg + dc
+                    if isValidIndex(grid, r: r, c: c) && grid[r][c] != byteOf("#")
+                        && distFromStart[r][c] != unreach {
+                        let z = distFromEnd[r][c]
+                        if z != unreach {
+                            ds.append(z)
+                        }
+                    }
+                }
+                if ds.count >= 2 {
+                    let cc = ds.max()! - ds.min()! - 2
+                    if cc > 0 {
+                        cheatCount[cc, default: 0] += 1
+                    }
+                }
+            }
+        }
+    }
+    return cheatCount
+}
+
+func solve() {
+    let filename = "/Users/xdavidliu/input20.txt"
+    let grid = getGrid(filename)
+    let distFromEnd = bfs(grid, "E")
+    let distFromStart = bfs(grid, "S")
+    let ccs = countCheats(grid, distFromEnd: distFromEnd, distFromStart: distFromStart)
+    var p1 = 0
+    for (k, c) in ccs {
+        if k >= 100 {
+            p1 += c
+        }
+    }
+    print("part 1 =", p1)  // 1518
+}
+
+solve()
