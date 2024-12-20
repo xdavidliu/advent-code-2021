@@ -6,7 +6,7 @@ end
 
 function readproblem(filename)
     blocks = split(rstrip(read(filename, String)), "\n\n")
-    [getgrid(b) for b in blocks]
+    Dict(getgrid(b) for b in blocks)
 end
 
 function edges(grid)
@@ -17,7 +17,7 @@ function withreverse(lines)
     vcat(lines, [reverse(x) for x in lines])
 end
 
-function part1(gs)
+function getdicts(gs)
     tab = Dict{String, Vector{Int}}()
     for (n, grid) in gs
         for ed in withreverse(edges(grid))
@@ -31,15 +31,21 @@ function part1(gs)
             count[a[1]] = get(count, a[1], 0) + 1
         end
     end
-    p1 = 1
-    for (k, c) in count
-        if c == 4
-            p1 *= k
-        end
-    end
-    p1
+    tab, count
 end
 
-filename = "/home/xdavidliu/Documents/aoc/input20.txt"
+filename = "/home/xdavidliu/Documents/aoc/sample.txt"
 gs = readproblem(filename);
-println("part 1 = ", part1(gs))  # 28057939502729
+tab, count = getdicts(gs)
+p1 = prod(k for (k, c) in count if c == 4)
+println("part 1 = ", p1)  # 28057939502729
+
+nblk = isqrt(length(gs))
+npt = length(first(keys(tab)))
+arr = Matrix{Bool}(undef, nblk * npt, nblk * npt);
+# using count, get one of the four corner ones, and put it in upper left corner
+# using tab, fill the upper row
+# keep filling more rows until whole thing is filled
+# take away the pizza crusts, create another smaller arr
+# create pair stencil for sea monster, try string matching all 8 directions
+# one of them will have the most. Hopefully other 7 have zero.
