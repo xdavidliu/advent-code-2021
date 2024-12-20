@@ -21,39 +21,55 @@ function readproblem(filename)
     Dict(getgrid(b) for b in blocks)
 end
 
-function edges(m)
+function edges(m, i)
     # clockwise starting with left edge
-    p = [m[end:-1:1,1], m[1,:], m[:, end], m[end, end:-1:1]]
-    [String(x) for x in p]
+    z = if i == 1
+        m[end:-1:1,1]
+    elseif i == 2
+        m[1,:]
+    elseif i == 3
+        m[:, end]
+    elseif i == 4
+        m[end, end:-1:1]
+    else
+        error("edges i")
+    end
+    String(z)
 end
+
+edges(m) = [edges(m, i) for i in 1:4]
 
 function withreverse(lines)
     vcat(lines, [reverse(x) for x in lines])
 end
 
-function getdicts(gs)
-    tab = Dict{String, Vector{Int}}()
+function getedge2tile(gs)
+    edge2tile = Dict{String, Vector{Int}}()
     for (n, grid) in gs
         for ed in withreverse(edges(grid))
-            a = get!(tab, ed, [])
+            a = get!(edge2tile, ed, [])
             push!(a, n)
         end
     end
-    count = Dict{Int, Int}()
-    for a in values(tab)
-        if 1 == length(a)
-            count[a[1]] = get(count, a[1], 0) + 1
-        end
-    end
-    tab, count
+    edge2tile
 end
 
-function getupperleft(tab, count)
+function getsingletilecount(edge2tile)
+    singletilecount = Dict{Int, Int}()
+    for a in values(edge2tile)
+        if 1 == length(a)
+            singletilecount[a[1]] = get(singletilecount, a[1], 0) + 1
+        end
+    end
+    singletilecount
+end
+
+function getupperleft(tab, count, gs)
     tile = first(k for (k, c) in count if c == 4)
     g = gs[tile]
     for _ in 1:4
-        if [length(tab[x]) for x in edges(g)] == [2, 2, 1, 1]
-            return g
+        if [length(tab[x]) for x in edges(g)] == [1, 1, 2, 2]
+            return tile, g
         else
             g = rotr90(g)
         end
@@ -61,27 +77,64 @@ function getupperleft(tab, count)
     error("getupperleft")
 end
 
-filename = "/home/xdavidliu/Documents/aoc/sample.txt"
+filename = "/usr/local/google/home/xdavidliu/Documents/sample.txt"
 gs = readproblem(filename);
-tab, count = getdicts(gs)
-p1 = prod(k for (k, c) in count if c == 4)
+edge2tile = getedge2tile(gs)
+singletilecount = getsingletilecount(edge2tile)
+
+p1 = prod(k for (k, c) in singletilecount if c == 4)
 println("part 1 = ", p1)  # 28057939502729
 
-nblk = isqrt(length(gs))
-npt = length(first(keys(tab)))
-arr = Matrix{Char}(undef, nblk * npt, nblk * npt);
-# using count, get one of the four corner ones, and put it in upper left corner
-# using tab, fill the upper row
-# keep filling more rows until whole thing is filled
-# take away the pizza crusts, create another smaller arr
-# create pair stencil for sea monster, try string matching all 8 directions
-# one of them will have the most. Hopefully other 7 have zero.
+function matchedge(m1, m2, i1, i2)
+    e1 = edges(m1, i1)
+    if e1 in edges(m2)
+        # because when matching, the edge on right will be reversed
+        # when going clockwise
+        m2 = reverse(m2, dims=2)
+    end
+    re1 = reverse(e1)
+    for _ in 1:4
+        if edges(m2, i2) == re1
+            return m2
+        end
+        m2 = rotr90(m2)
+    end
+    error("matchedge")
+end
 
+matchhoriz(m1, m2) = matchedge(m1, m2, 3, 1)
+matchvert(m1, m2) = matchedge(m1, m2, 4, 2)
 
-# find first 2: that one is the left edge and next one is upper edge
-# the second 2 can be wrapped around
-# stamp that down.
+function getothertile(edge2tile, m1, t1, i)
+    ts = edge2tile[edges(m1, i)]
+    t1 == ts[1] ? ts[2] : ts[1]
+end
 
-# wait, just rotate it until edges are 2 2 1 1
+gettileright(edge2tile, m1, t1) = getothertile(edge2tile, m1, t1, 3)
+gettilebelow(edge2tile, m1, t1) = getothertile(edge2tile, m1, t1, 4)
 
-# okay, convert to matrix. Can use julia rot90!
+function assembletiles(gs, edge2tile)
+    nblk = isqrt(length(gs))
+    npt = length(first(keys(edge2tile)))
+    arr = Matrix{Char}(undef, nblk * npt, nblk * npt);
+    t1, m1 = getupperleft(tab, count, gs)
+    for r in 1:nblk
+        t, m = t1, m1
+        for c in 2:nblk
+            t2 = gettileright(edge2tile, m, t)
+            m2 = matchhoriz(m, gs[t2])
+            arr[(r-1)*npt+1:r*npt, (c-1)*npt+1:c*npt] = m2
+            t, m = t2, m2
+        end
+        if r < nblk
+            tb = gettilebelow(edge2tile, m1, t1)
+            mb = matchvert(m1, gs[tb])
+            arr[r*npt+1:(r+1)*npt, 1:npt] = mb
+            t1, m1 = tb, mb
+        end
+    end
+    arr
+end
+
+arr = assembletiles(gs, edge2tile)
+displaycharmatrix(arr)
