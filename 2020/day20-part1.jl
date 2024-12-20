@@ -77,14 +77,6 @@ function getupperleft(tab, count, gs)
     error("getupperleft")
 end
 
-filename = "/usr/local/google/home/xdavidliu/Documents/sample.txt"
-gs = readproblem(filename);
-edge2tile = getedge2tile(gs)
-singletilecount = getsingletilecount(edge2tile)
-
-p1 = prod(k for (k, c) in singletilecount if c == 4)
-println("part 1 = ", p1)  # 28057939502729
-
 function matchedge(m1, m2, i1, i2)
     e1 = edges(m1, i1)
     if e1 in edges(m2)
@@ -113,11 +105,11 @@ end
 gettileright(edge2tile, m1, t1) = getothertile(edge2tile, m1, t1, 3)
 gettilebelow(edge2tile, m1, t1) = getothertile(edge2tile, m1, t1, 4)
 
-function assembletiles(gs, edge2tile)
+function assembletiles(gs, edge2tile, singletilecount)
     nblk = isqrt(length(gs))
     npt = length(first(keys(edge2tile)))-2
     arr = Matrix{Char}(undef, nblk * npt, nblk * npt);
-    t1, m1 = getupperleft(tab, count, gs)
+    t1, m1 = getupperleft(edge2tile, singletilecount, gs)
     arr[1:npt, 1:npt] = m1[2:end-1,2:end-1]
     println(nblk)
     for r in 1:nblk
@@ -138,5 +130,11 @@ function assembletiles(gs, edge2tile)
     arr
 end
 
-arr = assembletiles(gs, edge2tile)
+filename = "/usr/local/google/home/xdavidliu/Documents/sample.txt"
+gs = readproblem(filename);
+edge2tile = getedge2tile(gs)
+singletilecount = getsingletilecount(edge2tile)
+p1 = prod(k for (k, c) in singletilecount if c == 4)
+println("part 1 = ", p1)  # 28057939502729
+arr = assembletiles(gs, edge2tile, singletilecount)
 displaycharmatrix(arr)
