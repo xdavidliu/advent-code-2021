@@ -1,4 +1,4 @@
-function tomatrix(lines)
+/function tomatrix(lines)
     mat = Matrix{Char}(undef, length(lines), length(lines[1]))
     for (r, row) in enumerate(lines)
         for (c, val) in enumerate(row)
@@ -111,7 +111,6 @@ function assembletiles(gs, edge2tile, singletilecount)
     arr = Matrix{Char}(undef, nblk * npt, nblk * npt);
     t1, m1 = getupperleft(edge2tile, singletilecount, gs)
     arr[1:npt, 1:npt] = m1[2:end-1,2:end-1]
-    println(nblk)
     for r in 1:nblk
         t, m = t1, m1
         for c in 2:nblk
@@ -130,11 +129,15 @@ function assembletiles(gs, edge2tile, singletilecount)
     arr
 end
 
-filename = "/usr/local/google/home/xdavidliu/Documents/sample.txt"
-gs = readproblem(filename);
-edge2tile = getedge2tile(gs)
-singletilecount = getsingletilecount(edge2tile)
-p1 = prod(k for (k, c) in singletilecount if c == 4)
-println("part 1 = ", p1)  # 28057939502729
-arr = assembletiles(gs, edge2tile, singletilecount)
-displaycharmatrix(arr)
+function solve()
+    filename = "/usr/local/google/home/xdavidliu/Documents/input20.txt"
+    gs = readproblem(filename);
+    edge2tile = getedge2tile(gs)
+    singletilecount = getsingletilecount(edge2tile)
+    p1 = prod(k for (k, c) in singletilecount if c == 4)
+    println("part 1 = ", p1)  # 28057939502729
+    arr = assembletiles(gs, edge2tile, singletilecount)
+    displaycharmatrix(arr)
+end
+
+solve()
