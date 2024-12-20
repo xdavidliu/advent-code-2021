@@ -15,24 +15,29 @@ func solve() {
     let filename = "/Users/xdavidliu/input19.txt"
     let (towels, (smallN, largeN), designs) = readProblem(filename)
     var p1 = 0
+    var p2 = 0
     for des in designs {
-        if isMatch(towels, des, small: smallN, large: largeN) {
+        let cm = countMatch(towels, des, small: smallN, large: largeN)
+        if 0 != cm {
             p1 += 1
         }
+        p2 += cm
     }
     print("part 1 =", p1)  // 298
+    print("part 2 =", p2)  // 572248688842069
 }
 
-func isMatch(_ towels: Set<[UInt8]>, _ line: [UInt8], small: Int, large: Int) -> Bool {
-    var bs = [Bool](repeating: false, count: 1+line.count)
-    bs[0] = true
+// resembles the DP array solution for the "ways to make change" problem
+func countMatch(_ towels: Set<[UInt8]>, _ line: [UInt8], small: Int, large: Int) -> Int {
+    var bs = [Int](repeating: 0, count: 1+line.count)
+    bs[0] = 1
     for k in 1..<bs.count {
         for m in small...large {
             if k < m {
                 break
-            } else if bs[k-m] && towels.contains(Array(line[k-m..<k])) {
-                bs[k] = true
-                break
+            }
+            if towels.contains(Array(line[k-m..<k])) {
+                bs[k] += bs[k-m]
             }
         }
     }
