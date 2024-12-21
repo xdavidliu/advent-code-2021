@@ -76,17 +76,22 @@ func moreThanHundred(_ ccs: [Int: Int]) -> Int {
 }
 
 func solve() {
-    let filename = "/Users/xdavidliu/input20.txt"
+    let filename = "/Users/xdavidliu/sample.txt"
     let grid = getGrid(filename)
     let distFromEnd = bfs(grid, "E")
     let distFromStart = bfs(grid, "S")
     let ccs = countCheats(grid, distFromEnd: distFromEnd, distFromStart: distFromStart)
     let p1 = moreThanHundred(ccs)
     print("part 1 =", p1)  // 1518
-//    let cm = countManhattan(grid, distFromEnd: distFromEnd, distFromStart: distFromStart)
-//    let p2 = moreThanHundred(cm)
-//    print("part 2 =", p2)  // 0
-    // 1084746 too high
+    let cm = countManhattan(grid, distFromEnd: distFromEnd, distFromStart: distFromStart)
+    let p2 = moreThanHundred(cm)
+    print("part 2 =", p2)  // 0
+    // 1084746 too high, 1196351 even higher
+    for (k, c) in cm {
+        if k >= 50 {
+            print(c, k)
+        }
+    }
 }
 
 // wait start time does NOT need to be accessible from end,
@@ -95,10 +100,14 @@ func solve() {
 // oh, just compute total distance from S and use that, then compute actual distance
 // and compare to that.
 func countManhattan(_ grid: [[UInt8]], distFromEnd: [[Int]], distFromStart: [[Int]]) -> [Int: Int] {
+    let (r0, c0) = findChar(grid, "S")
+    let cheatlessDist = distFromEnd[r0][c0]
     var cheatCount: [Int: Int] = [:]
     for rg in grid.indices {
         for cg in grid[rg].indices {
-            if grid[rg][cg] == byteOf("#") || distFromStart[rg][cg] == unreach || distFromEnd[rg][cg] == unreach {
+            // note deliberate do not check distFromEnd unreach here, since you can cheat from here
+            // and can make it to end
+            if grid[rg][cg] == byteOf("#") || distFromStart[rg][cg] == unreach {
                 continue
             }
             for md in 1...20 {
@@ -108,11 +117,13 @@ func countManhattan(_ grid: [[UInt8]], distFromEnd: [[Int]], distFromStart: [[In
                     let dcs = [dc0, -dc0].filter({grid[rg].indices.contains(cg + $0)})
                     for dc in dcs {
                         let c = cg + dc
-                        if grid[r][c] == byteOf("#") || distFromStart[r][c] == unreach || distFromEnd[r][c] == unreach {
+                        // deliberately do not check distFromStart == unreach here, for
+                        // similar reason as above
+                        if grid[r][c] == byteOf("#") || distFromEnd[r][c] == unreach {
                             continue
                         }
-                        let actualDiff = distFromEnd[rg][cg] - distFromEnd[r][c]
-                        let saving = actualDiff - md
+                        let cheatfulDist = distFromStart[rg][cg] + md + distFromEnd[r][c]
+                        let saving = cheatfulDist - cheatlessDist
                         if saving > 0 {
                             cheatCount[saving, default: 0] += 1
                         }
@@ -125,3 +136,29 @@ func countManhattan(_ grid: [[UInt8]], distFromEnd: [[Int]], distFromStart: [[In
 }
 
 solve()
+
+/*
+ 4 90
+ 62 58
+ 70 52    31
+ 55 72
+ 54 62
+ 187 68
+ 57 84
+ 40 70
+ 120 56
+ 51 64
+ 11 88
+ 32 78
+ 48 66
+ 3 92
+ 69 54      29
+ 8 86
+ 106 80
+ 34 74
+ 21 82
+ 76 60
+ 34 76
+ 70 50     32
+
+ */
