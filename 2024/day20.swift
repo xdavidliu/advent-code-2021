@@ -2,6 +2,12 @@ import Foundation
 
 let unreach = -1
 
+// this is slow, can be improved. Slowest part is the double loop over onPath.
+// lots of those points are not actually on the path. To speed up, create parent tree
+// when BFS so you directly have the points on the path. That I believe is much fewer
+// than all points I currently call onPath which just have != unreach for both fromStart
+// and fromEnd.
+
 func findChar(_ grid: [[UInt8]], _ ch: String) -> (Int, Int) {
     for r in grid.indices {
         for c in grid[r].indices {
