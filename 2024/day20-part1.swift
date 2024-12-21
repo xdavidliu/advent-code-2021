@@ -39,29 +39,40 @@ func countCheats(_ grid: [[UInt8]], distFromEnd: [[Int]], distFromStart: [[Int]]
     var cheatCount: [Int: Int] = [:]
     for rg in grid.indices {
         for cg in grid[rg].indices {
-            if grid[rg][cg] == byteOf("#") {
-                var ds: [Int] = []
-                for (dr, dc) in [(1, 0), (-1, 0), (0, 1), (0, -1)] {
-                    let r = rg + dr
-                    let c = cg + dc
-                    if isValidIndex(grid, r: r, c: c) && grid[r][c] != byteOf("#")
-                        && distFromStart[r][c] != unreach {
-                        let z = distFromEnd[r][c]
-                        if z != unreach {
-                            ds.append(z)
-                        }
+            if grid[rg][cg] != byteOf("#") {
+                continue
+            }
+            var ds: [Int] = []
+            for (dr, dc) in [(1, 0), (-1, 0), (0, 1), (0, -1)] {
+                let r = rg + dr
+                let c = cg + dc
+                if isValidIndex(grid, r: r, c: c) && grid[r][c] != byteOf("#")
+                    && distFromStart[r][c] != unreach {
+                    let z = distFromEnd[r][c]
+                    if z != unreach {
+                        ds.append(z)
                     }
                 }
-                if ds.count >= 2 {
-                    let cc = ds.max()! - ds.min()! - 2
-                    if cc > 0 {
-                        cheatCount[cc, default: 0] += 1
-                    }
+            }
+            if ds.count >= 2 {
+                let cc = ds.max()! - ds.min()! - 2
+                if cc > 0 {
+                    cheatCount[cc, default: 0] += 1
                 }
             }
         }
     }
     return cheatCount
+}
+
+func moreThanHundred(_ ccs: [Int: Int]) -> Int {
+    var p1 = 0
+    for (k, c) in ccs {
+        if k >= 100 {
+            p1 += c
+        }
+    }
+    return p1
 }
 
 func solve() {
@@ -70,13 +81,47 @@ func solve() {
     let distFromEnd = bfs(grid, "E")
     let distFromStart = bfs(grid, "S")
     let ccs = countCheats(grid, distFromEnd: distFromEnd, distFromStart: distFromStart)
-    var p1 = 0
-    for (k, c) in ccs {
-        if k >= 100 {
-            p1 += c
+    let p1 = moreThanHundred(ccs)
+    print("part 1 =", p1)  // 1518
+//    let cm = countManhattan(grid, distFromEnd: distFromEnd, distFromStart: distFromStart)
+//    let p2 = moreThanHundred(cm)
+//    print("part 2 =", p2)  // 0
+    // 1084746 too high
+}
+
+// wait start time does NOT need to be accessible from end,
+// but end state DOES need to be
+// so how do you do subtraction if its unreach? don't want to subtract -1
+// oh, just compute total distance from S and use that, then compute actual distance
+// and compare to that.
+func countManhattan(_ grid: [[UInt8]], distFromEnd: [[Int]], distFromStart: [[Int]]) -> [Int: Int] {
+    var cheatCount: [Int: Int] = [:]
+    for rg in grid.indices {
+        for cg in grid[rg].indices {
+            if grid[rg][cg] == byteOf("#") || distFromStart[rg][cg] == unreach || distFromEnd[rg][cg] == unreach {
+                continue
+            }
+            for md in 1...20 {
+                for dr in max(-md, -rg)...min(md, grid.count - 1 - rg) {
+                    let dc0 = md - abs(dr)
+                    let r = rg + dr
+                    let dcs = [dc0, -dc0].filter({grid[rg].indices.contains(cg + $0)})
+                    for dc in dcs {
+                        let c = cg + dc
+                        if grid[r][c] == byteOf("#") || distFromStart[r][c] == unreach || distFromEnd[r][c] == unreach {
+                            continue
+                        }
+                        let actualDiff = distFromEnd[rg][cg] - distFromEnd[r][c]
+                        let saving = actualDiff - md
+                        if saving > 0 {
+                            cheatCount[saving, default: 0] += 1
+                        }
+                    }
+                }
+            }
         }
     }
-    print("part 1 =", p1)  // 1518
+    return cheatCount
 }
 
 solve()
