@@ -26,6 +26,7 @@ function getknown(ings, alls)
         red[k] = reduce(intersect, v)
     end
     known = Set{String}()
+    knownvalue = Dict{String, String}()
     i = 0
     while length(known) < length(poss)
         i += 1
@@ -38,6 +39,7 @@ function getknown(ings, alls)
             if length(v) == 1
                 s = first(v)
                 push!(known, s)
+                knownvalue[k] = s
                 found = true
                 break
             end
@@ -48,7 +50,7 @@ function getknown(ings, alls)
             end
         end
     end
-    known
+    known, knownvalue
 end
 
 function part1(ings, known)
@@ -61,9 +63,12 @@ end
 
 function solve()
     ings, alls = readproblem("/home/xdavidliu/Documents/input21.txt")
-    known = getknown(ings, alls)
+    known, knownvalue = getknown(ings, alls)
     p1 = part1(ings, known)
     println("part 1 = ", p1)  # 2162
+    alpha = sort([k for k in keys(knownvalue)])
+    p2 = join([knownvalue[x] for x in alpha], ",")
+    println("part 2 = ", p2)  # lmzg,cxk,bsqh,bdvmx,cpbzbx,drbm,cfnt,kqprv
 end
 
-# solve()
+solve()
