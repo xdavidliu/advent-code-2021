@@ -1,184 +1,125 @@
 import Foundation
 
-let numText = """
-789
-456
-123
-#0A
-"""
+let allDirs = "><^vA".asciiValues
+let allNums = "0123456789A".asciiValues
 
-let dirText = """
-###
-###
-###
-#^A
-<v>
-"""
-// spaces so that A is in same position in both places
-// so can put in single dict
-let aLoc = (3, 2)
-
-typealias Locs = [UInt8: (Int, Int)]
-let numGrid = numText.split(separator: "\n").map{$0.asciiValues}
-let dirGrid = dirText.split(separator: "\n").map{$0.asciiValues}
-let locs = createDict()
-
-func createDict() -> Locs {
-    var dict: Locs = [:]
-    storeToDict(numGrid, &dict)
-    storeToDict(dirGrid, &dict)
-    return dict
+func toString(_ x: UInt8) -> String {
+    return String(bytes: [x], encoding: .utf8)!
 }
 
-func storeToDict(_ grid: [[UInt8]], _ dict: inout Locs) {
-    for r in grid.indices {
-        for c in grid[r].indices {
-            let bt = grid[r][c]
-            if bt == byteOf("#") {
-                continue
-            }
-            dict[bt] = (r, c)
-        }
+func toString(_ x: UInt8, _ y: UInt8) -> String {
+    return String(bytes: [x, y], encoding: .utf8)!
+}
+
+func padPos(_ x: UInt8) -> (Int, Int) {
+    return switch toString(x) {
+    case "<": (1, 0)
+    case "^": (0, 1)
+    case "A": (0, 2)
+    case "v": (1, 1)
+    case ">": (1, 2)
+    case "0": (0, 1)
+    case "1": (-1, 0)  // make negative so A same position
+    case "2": (-1, 1)
+    case "3": (-1, 2)
+    case "4": (-2, 0)
+    case "5": (-2, 1)
+    case "6": (-2, 2)
+    case "7": (-3, 0)
+    case "8": (-3, 1)
+    case "9": (-3, 2)
+    default: fatalError("padPos")
     }
 }
 
-func getSegment(from: UInt8, to: UInt8) -> [UInt8] {
-    // also works for from == to because it appends just A at end
-    let (rf, cf) = locs[from]!
-    let (rt, ct) = locs[to]!
-    let dr = rt - rf
-    let dc = ct - cf
-    var out: [UInt8] = []
-    func doHoriz() {
-        if dc > 0 {
-            out.append(contentsOf: [UInt8](repeating: byteOf(">"), count: dc))
-        }
-        if dc < 0 {
-            out.append(contentsOf: [UInt8](repeating: byteOf("<"), count: abs(dc)))
-        }
+// from and to are on the dir pad, not num pad. Need separate function for that.
+func getDirs(from: UInt8, to: UInt8) -> [[UInt8]] {
+    if from == to {
+        return [[]]
     }
-    func doVert() {
-        if dr < 0 {
-            out.append(contentsOf: [UInt8](repeating: byteOf("^"), count: abs(dr)))
-        }
-        if dr > 0 {
-            out.append(contentsOf: [UInt8](repeating: byteOf("v"), count: dr))
-        }
+    let (rfrom, cfrom) = padPos(from)
+    let (rto, cto) = padPos(to)
+    let dc = cto - cfrom
+    let dr = rto - rfrom
+    var first: [UInt8] = []
+    if dr != 0 {
+        let s = if dr < 0 { "^" } else { "v" }
+        first.append(contentsOf: [UInt8](repeating: byteOf(s), count: abs(dr)))
     }
-    // whether dir or num, this situation would result in going thru forbidden cell
-    if ct == 0 && rf == aLoc.0 {
-        doVert()
-        doHoriz()
+    if dc != 0 {
+        let s = if dc < 0 { "<" } else { ">" }
+        first.append(contentsOf: [UInt8](repeating: byteOf(s), count: abs(dc)))
+    }
+    let isDir = allDirs.contains(from) || allDirs.contains(to)
+    let isNum = allNums.contains(from) || allNums.contains(to)
+    if cto == 0 && dr == 1 && isDir{
+        return [first]  // vertical first
+    } else if isNum && rfrom == 0 && cto == 0 {
+        return [first]
+    }
+    let rev = [UInt8](first.reversed())
+    if cfrom == 0 && dr == -1 && isDir {
+        return [rev]  // horizontal first
+    } else if isNum && cfrom == 0 && rto == 0 {
+        return [rev]
+    } else if dr != 0 && dc != 0 {
+        return [first, rev]
     } else {
-        doHoriz()
-        doVert()
+        return [first]
     }
-    out.append(byteOf("A"))
-    return out
 }
 
-func getPath(_ bs: [UInt8]) -> [UInt8] {
-    var prev = byteOf("A")
-    var out: [UInt8] = []
-    for x in bs {
-        let seg = getSegment(from: prev, to: x)
-        out.append(contentsOf: seg)
-        prev = x
-    }
-    return out
-}
-
-func toString(_ b: UInt8) -> String {
-    return String(bytes: [b], encoding: .utf8)!
-}
-
-func fromPath(_ bs: [UInt8], _ grid: [[UInt8]]) -> [UInt8] {
-    var (r, c) = aLoc
-    var out: [UInt8] = []
-    for bt in bs {
-        switch toString(bt) {
-        case "<":
-            c -= 1
-        case ">":
-            c += 1
-        case "^":
-            r -= 1
-        case "v":
-            r += 1
-        case "A":
-            out.append(grid[r][c])
-        default:
-            fatalError("fromPath")
+func getTrivialPrices() -> [String: Int] {
+    var prices: [String: Int] = [:]
+    for from in allDirs {
+        for to in allDirs {
+            // because it's the cost of starting at from, moving to to, and spitting it out.
+            // spitting it out means just literally spitting out one to
+            prices[toString(from, to)] = 1
         }
     }
-    return out
+    return prices
 }
 
-func getPathString(_ s: String, _ times: Int = 1) -> String {
-    var bs = s.asciiValues
-    for _ in 1...times {
-        bs = getPath(bs)
+func totalPrice(_ bs: [UInt8], _ prev: [String: Int]) -> Int {
+    var x = byteOf("A")
+    var total = 0
+    for b in bs {
+        total += prev[toString(x, b)]!
+        x = b
     }
-    return String(bytes: bs, encoding: .utf8)!
+    return total
 }
 
-func fromPathString(_ s: String, _ times: Int = 1) -> String {
-    var bs = s.asciiValues
-    for i in 1...times {
-        let grid = if i == 3 { numGrid } else { dirGrid }
-        bs = fromPath(bs, grid)
+func getNextPrices(_ prev: [String: Int], _ allChs: [UInt8]) -> [String: Int] {
+    var cur: [String: Int] = [:]
+    for from in allChs {
+        for to in allChs {
+            var best = Int.max
+            for bs in getDirs(from: from, to: to) {
+                let pr = totalPrice(bs + [byteOf("A")], prev)
+                best = min(best, pr)
+            }
+            cur[toString(from, to)] = best
+        }
     }
-    return String(bytes: bs, encoding: .utf8)!
+    return cur
 }
 
-func numericPart(_ s: String) -> Int {
-    let ind = s.firstIndex(of: "A")!
-    return Int(s[..<ind])!
+func foo() {
+    var prices = getTrivialPrices()
+    for _ in 1...25 {  // 1...2 or 1...25
+        prices = getNextPrices(prices, allDirs)
+    }
+    prices = getNextPrices(prices, allNums)
+    let lines = ["789A", "968A", "286A", "349A", "170A"]
+    for x in lines {
+        print(totalPrice(x.asciiValues, prices))
+    }
+//    print(66 * 789 + 70 * 968 + 68 * 286 + 72 * 349 + 72 * 170)
+    print(80786362260 * 789 + 86475783010 * 968 + 86475783008 * 286 + 87793663956 * 349 + 87513499936 * 170)
+    // part 2
+    // 217698355426872
 }
 
-func bestLength(_ s: String) -> Int {
-    return getPathString(s, 3).count
-}
-
-func complexity(_ s: String) -> Int {
-    return bestLength(s) * numericPart(s)
-}
-
-func part1(_ lines: [String]) -> Int {
-    return lines.map{complexity($0)}.reduce(0, +)
-}
-
-let lines = """
-789A
-968A
-286A
-349A
-170A
-""".split(separator: "\n").map(String.init)
-
-//print(part1(lines))
-// sample expect 126384
-
-// 181666 too high
-
-//let s = "789A"
-//let s = "^^^<<A>A>AvvvA"  // 66
-
-//let s = "968A"
-//let s = "^^^AvA<^Avvv>A"  // 70
-
-//let s = "286A"
-//let s = "<^A^^Av>AvvA"  // 68
-
-//let s = "349A"
-//let s = "^A<<^A>>^AvvvA"  // 72
-
-// this is the only one that requires attention to forbidden cells
-//let s = "170A"
-//let s = "^<<A^^A>vvvA>A"  // 72
-//print(getPathString(s))
-//print(getPathString(s, 2).count)
-
-let p1 = 66 * 789 + 968 * 70 + 286 * 68 + 349 * 72 + 170 * 72
-print(p1)
-// 176650 correct.
+foo()
