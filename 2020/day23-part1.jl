@@ -1,6 +1,7 @@
 n = 9
 
 indnext(i) = i == n ? 1 : i+1
+valprev(x) = x == 1 ? 9 : x-1
 
 function nextthree(a, i)
     i1 = indnext(i)
@@ -11,17 +12,14 @@ function nextthree(a, i)
 end
 
 function destination(x, nt)
-    v = x-1
+    v = valprev(x)
     while v in nt
-        v -= 1
-        if v == 0
-            v = 9
-        end
+        v = valprev(v)
     end
     v
 end
 
-function move(a, i)
+function move!(a, i)
     r, nt = nextthree(a, i)
     l = indnext(i)
     dest = destination(a[i], nt)
@@ -37,10 +35,26 @@ function move(a, i)
         a[l] = x
         l = indnext(l)
     end
-    nextind(i)
 end
 
-arr = [3,8,9,1,2,5,4,6,7]
-i =  
-move(arr, 1)
-println(arr)
+function collect(a)
+    i = 1
+    while a[i] != 1
+        i = indnext(i)
+    end
+    out = Vector{Int}()
+    for _ in 1:8
+        i = indnext(i)
+        push!(out, a[i])
+    end
+    out
+end
+
+# arr = [3,8,9,1,2,5,4,6,7]
+arr = [9,5,2,3,1,6,4,8,7]
+i = 1
+for _ in 1:100
+    move!(arr, i)
+    i = indnext(i)
+end
+println("part 1 = ", join(collect(arr), ""))  # 25398647
