@@ -32,7 +32,7 @@ func padPos(_ x: UInt8) -> (Int, Int) {
     }
 }
 
-// from and to are on the dir pad, not num pad. Need separate function for that.
+// this function is a mess. Handles both num pad and dir pad. Can prob be cleaned up
 func getDirs(from: UInt8, to: UInt8) -> [[UInt8]] {
     if from == to {
         return [[]]
@@ -106,20 +106,27 @@ func getNextPrices(_ prev: [String: Int], _ allChs: [UInt8]) -> [String: Int] {
     return cur
 }
 
-func foo() {
+func numPrefix(_ s: String) -> Int {
+    // https://stackoverflow.com/a/39676940/2990344
+    let k = s.index(s.startIndex, offsetBy: 3)
+    return Int(s[..<k])!
+}
+
+func complexity(_ lines: [String], _ times: Int) -> Int {
     var prices = getTrivialPrices()
-    for _ in 1...25 {  // 1...2 or 1...25
+    for _ in 1...times {
         prices = getNextPrices(prices, allDirs)
     }
     prices = getNextPrices(prices, allNums)
-    let lines = ["789A", "968A", "286A", "349A", "170A"]
+    var sum = 0
     for x in lines {
-        print(totalPrice(x.asciiValues, prices))
+        sum += numPrefix(x) * totalPrice(x.asciiValues, prices)
     }
-//    print(66 * 789 + 70 * 968 + 68 * 286 + 72 * 349 + 72 * 170)
-    print(80786362260 * 789 + 86475783010 * 968 + 86475783008 * 286 + 87793663956 * 349 + 87513499936 * 170)
-    // part 2
-    // 217698355426872
+    return sum
 }
 
-foo()
+let lines = ["789A", "968A", "286A", "349A", "170A"]
+let p1 = complexity(lines, 2)
+let p2 = complexity(lines, 25)
+print("part 1 =", p1)  // 176650
+print("part 2 =", p2)  // 217698355426872
