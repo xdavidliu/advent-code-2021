@@ -20,43 +20,59 @@ func separate(_ word: String) -> (String, String) {
     return (String(ws[0]), String(ws[1]))
 }
 
-func readProblem(_ filename: String) -> (Set<String>, Set<String>) {
+func readProblem(_ filename: String) -> [String: Set<String>] {
     let lines = getLines(filename, omittingEmptySubsequences: true)
-    var connects = Set<String>()
-    var nodes = Set<String>()
+    var adj: [String: Set<String>] = [:]
     for line in lines {
         let (a, b) = separate(line)
-        connects.insert(canonical(a, b))
-        nodes.insert(a)
-        nodes.insert(b)
+        adj[a, default: []].insert(b)
+        adj[b, default: []].insert(a)
     }
-    return (nodes, connects)
+    return adj
 }
 
 func startT<T>(_ s: T) -> Bool where T: StringProtocol {
     return s.starts(with: "t")
 }
 
-func solve() {
-    let filename = "/Users/xdavidliu/input23.txt"
-    let (nodes, connects) = readProblem(filename)
+func part1(_ adj: [String: Set<String>]) {
     var triple = Set<String>()
-    for line in connects {
-        let (a, b) = separate(line)
-        let alreadyT = startT(a) || startT(b)
-        for node in nodes {
-            if !alreadyT && !startT(node) {
+    for (a, bs) in adj {
+        for b in bs {
+            if b < a {
                 continue
             }
-            if node == a || node == b {
-                continue
-            }
-            if connects.contains(canonical(a, node)) && connects.contains(canonical(b, node)) {
-                triple.insert(canonical(a, b, node))
+            let alreadyT = startT(a) || startT(b)
+            for (node, _) in adj {
+                if !alreadyT && !startT(node) {
+                    continue
+                }
+                if node == a || node == b {
+                    continue
+                }
+                if adj[a]!.contains(node) && adj[b]!.contains(node) {
+                    triple.insert(canonical(a, b, node))
+                }
             }
         }
     }
     print("part 1 =", triple.count)  // 1154
 }
 
+func solve() {
+    let filename = "/Users/xdavidliu/sample.txt"
+    let adj = readProblem(filename)
+    part1(adj)
+}
+
 solve()
+
+
+/*
+ seen is set of seen
+ go thru adj and start bfs from each
+ store in component, and also in seen
+ if it's in seen, don't go to it
+ after done, add component to out. Out is list of sets
+ return out when done
+ */
