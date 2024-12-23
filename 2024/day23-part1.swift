@@ -56,58 +56,49 @@ func part1(_ adj: [String: Set<String>]) {
             }
         }
     }
-    print("part 1 =", triple.count)  // 1154
+    print("part 1 =", triple.count)
 }
 
-func bfs(_ a: String, _ adj: [String: Set<String>], _ seen: inout Set<String>, _ comps: inout [Set<String>]) {
-    if seen.contains(a) {
-        return
-    }
-    var comp = Set<String>()
-    seen.insert(a)
-    comp.insert(a)
-    var que = Queue<String>()
-    que.add(a)
-    while !que.isEmpty {
-        let front = que.remove()
-        for nb in adj[front]! {
-            if seen.contains(nb) {
-                continue
+// inefficient brute force, but fine because each row of adj is O(10)
+func largest(_ a: String, _ adj: [String: Set<String>]) -> [String] {
+    let bs = [String](adj[a]!)
+    var out: [String] = []
+    for i in 0..<bs.count-1 {
+        if out.count > bs.count - i {
+            break
+        }
+        var comp = [bs[i]]
+        for k in i+1..<bs.count {
+            if comp.allSatisfy({adj[bs[k]]!.contains($0)}) {
+                comp.append(bs[k])
             }
-            seen.insert(nb)
-            comp.insert(nb)
-            que.add(nb)
+        }
+        if comp.count > out.count {
+            out = comp
         }
     }
-    comps.append(comp)
+    out.append(a)
+    out.sort()
+    return out
 }
 
 func part2(_ adj: [String: Set<String>]) {
-    var comps: [Set<String>] = []
-    var seen: Set<String> = []
+    var best: [String] = []
     for a in adj.keys {
-        bfs(a, adj, &seen, &comps)
+        let cur = largest(a, adj)
+        if cur.count > best.count {
+            best = cur
+        }
     }
-    for comp in comps {
-        print(comp.count)
-    }
+    let p2 = best.joined(separator: ",")
+    print("part 2 =", p2)
 }
 
 func solve() {
-    let filename = "/Users/xdavidliu/sample.txt"
+    let filename = "/Users/xdavidliu/input23.txt"
     let adj = readProblem(filename)
-    part1(adj)
-    part2(adj)
+    part1(adj)  // 1154
+    part2(adj)  // aj,ds,gg,id,im,jx,kq,nj,ql,qr,ua,yh,zn
 }
 
 solve()
-
-
-/*
- seen is set of seen
- go thru adj and start bfs from each
- store in component, and also in seen
- if it's in seen, don't go to it
- after done, add component to out. Out is list of sets
- return out when done
- */
