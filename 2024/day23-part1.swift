@@ -43,7 +43,7 @@ func part1(_ adj: [String: Set<String>]) {
                 continue
             }
             let alreadyT = startT(a) || startT(b)
-            for (node, _) in adj {
+            for node in adj.keys {
                 if !alreadyT && !startT(node) {
                     continue
                 }
@@ -59,10 +59,45 @@ func part1(_ adj: [String: Set<String>]) {
     print("part 1 =", triple.count)  // 1154
 }
 
+func bfs(_ a: String, _ adj: [String: Set<String>], _ seen: inout Set<String>, _ comps: inout [Set<String>]) {
+    if seen.contains(a) {
+        return
+    }
+    var comp = Set<String>()
+    seen.insert(a)
+    comp.insert(a)
+    var que = Queue<String>()
+    que.add(a)
+    while !que.isEmpty {
+        let front = que.remove()
+        for nb in adj[front]! {
+            if seen.contains(nb) {
+                continue
+            }
+            seen.insert(nb)
+            comp.insert(nb)
+            que.add(nb)
+        }
+    }
+    comps.append(comp)
+}
+
+func part2(_ adj: [String: Set<String>]) {
+    var comps: [Set<String>] = []
+    var seen: Set<String> = []
+    for a in adj.keys {
+        bfs(a, adj, &seen, &comps)
+    }
+    for comp in comps {
+        print(comp.count)
+    }
+}
+
 func solve() {
     let filename = "/Users/xdavidliu/sample.txt"
     let adj = readProblem(filename)
     part1(adj)
+    part2(adj)
 }
 
 solve()
