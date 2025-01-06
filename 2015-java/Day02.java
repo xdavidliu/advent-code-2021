@@ -1,30 +1,10 @@
-import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.util.Arrays;
-import java.util.regex.Pattern;
-import java.util.stream.Stream;
-
+import java.nio.file.*; import java.util.Arrays;
 public class Day02 {
-    public static void main(String[] args) throws IOException {
-        final Pattern PAT = Pattern.compile("x");
-        var dims = Files
-                .lines(Path.of("/home/xdavidliu/Documents/temp/data02.txt"))
-                .map(ln -> PAT.splitAsStream(ln)
-                        .mapToInt(Integer::decode).toArray())
-                .toList();
-        System.out.format("part 1 = %d, part 2 = %d\n",
-                dims.stream().mapToInt(Day02::part1).sum(),
-                dims.stream().mapToInt(Day02::part2).sum());
-    }
-    private static int part1(int[] dim) {
-        var areas = Stream.of(0,1,2)
-                .mapToInt(i -> dim[i] * dim[(i+1)%3]).toArray();
-        return Arrays.stream(areas).min().getAsInt()
-                + 2 * Arrays.stream(areas).sum();
-    }
-    private static int part2(int[] dim) {
-        return Arrays.stream(dim).reduce((x, y) -> x * y).getAsInt()
-                + 2 * (Arrays.stream(dim).sum() - Arrays.stream(dim).max().getAsInt());
+    static void solve() throws java.io.IOException {
+        int p1 = 0, p2 = 0; for (var s : Files.readAllLines(Path.of("./input/day02.txt"))) {
+            var a = Arrays.stream(s.split("x")).mapToInt(Integer::parseInt).toArray();
+            Arrays.sort(a); int prod = a[0] * a[1], twoSum = 2 * (a[0] + a[1]);
+            p1 += 3 * prod + a[2] * twoSum; p2 += twoSum + prod * a[2];
+        } System.out.printf("02 %d %d\n", p1, p2);
     }
 }

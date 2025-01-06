@@ -1,29 +1,13 @@
-import java.io.UnsupportedEncodingException;
-import java.security.MessageDigest;
-import java.security.NoSuchAlgorithmException;
-
+import java.nio.file.*; import java.security.*;
 public class Day04 {
-    public static void main(String[] args) {
-        MessageDigest md = null;
-        try {
-            md = MessageDigest.getInstance("MD5");
-        } catch(NoSuchAlgorithmException e) {
-        }
-        if (md == null) return;
-        
-        try{
-            for (int i = 0; i < 10000000; ++i) {
-                String s = "ckczppom" + Integer.toString(i);
-                byte[] msg = s.getBytes("UTF-8");
-                byte[] z = md.digest(msg);
-                boolean a = z[0] == 0, b = z[1] == 0;
-                // boolean c = (0 == (0xF0 & z[2]));  // part 1
-                boolean c = z[2] == 0;  // part 2
-                if (a && b && c) {
-                    System.out.println("found: " + i);
-                    return;
-                }
+    static void solve() throws java.io.IOException, NoSuchAlgorithmException {
+        var s = Files.readString(Path.of("./input/day04.txt")).stripTrailing();
+        int p1 = -1, p2 = -1; var md = MessageDigest.getInstance("MD5");
+        for (int i = 0; p1 == -1 || p2 == -1; ++i) {
+            var bs = md.digest((s+i).getBytes()); if (bs[0] == 0 && bs[1] == 0) {
+                if (p1 == -1 && 0 == (bs[2] & 0xF0)) { p1 = i; }
+                if (p2 == -1 && 0 == bs[2]) { p2 = i; }
             }
-        } catch(UnsupportedEncodingException e) {}
+        } System.out.printf("04 %d %d\n", p1, p2);
     }
 }
